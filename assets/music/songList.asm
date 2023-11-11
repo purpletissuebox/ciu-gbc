@@ -130,5 +130,5 @@ pcm_struct: MACRO
 ENDM
 
 song_list:
-	song crabby, 164, 0
+	song crabby, 164, 1
 	.end

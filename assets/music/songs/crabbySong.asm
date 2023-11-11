@@ -54,6 +54,7 @@ crabby_notestream_ch1:
 	note dnote ,  5,  5, $03,    quarternote
 	note enote ,  5,  5, $05,  9*eighthnote
 	.m_1_C:
+	infinite_loop 1,4
 SECTION "CRABBY_SONG_CH2", ROMX
 crabby_notestream_ch2:
 	.m_2_0:
@@ -107,6 +108,7 @@ crabby_notestream_ch2:
 	note enote ,  5,  4, $05,  7*halfnote
 	.m_2_B:
 	.m_2_C:
+	infinite_loop 2,4
 SECTION "CRABBY_SONG_CH3", ROMX
 crabby_notestream_ch3:
 	.m_3_0:
@@ -305,6 +307,7 @@ crabby_notestream_ch3:
 	note a#note,  3,  2, $0A,    eighthnote
 	note a#note,  3,  2, $0A,    eighthnote
 	.m_3_C:
+	infinite_loop 3,4
 SECTION "CRABBY_SONG_CH4", ROMX
 crabby_notestream_ch4:
 	.m_4_0:
@@ -531,3 +534,4 @@ crabby_notestream_ch4:
 	note gnote , 11, 11, $05,  7*sixtyfourthnote
 	note g#note, 11,  0, $06,    sixtyfourthnote
 	.m_4_C:
+	infinite_loop 4,4
