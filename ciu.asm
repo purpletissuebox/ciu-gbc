@@ -1,84 +1,49 @@
-NEWCHARMAP snsStrings
-SETCHARMAP snsStrings
-	CHARMAP "A", $00
-	CHARMAP "B", $01
-	CHARMAP "C", $02
-	CHARMAP "D", $03
-	CHARMAP "E", $04
-	CHARMAP "F", $05
-	CHARMAP "G", $06
-	CHARMAP "H", $07
-	CHARMAP "I", $08
-	CHARMAP "J", $09
-	CHARMAP "K", $0A
-	CHARMAP "L", $0B
-	CHARMAP "M", $0C
-	CHARMAP "N", $0D
-	CHARMAP "O", $0E
-	CHARMAP "P", $0F
-	CHARMAP "Q", $10
-	CHARMAP "R", $11
-	CHARMAP "S", $12
-	CHARMAP "T", $13
-	CHARMAP "U", $14
-	CHARMAP "V", $15
-	CHARMAP "W", $16
-	CHARMAP "X", $17
-	CHARMAP "Y", $18
-	CHARMAP "Z", $19
-	CHARMAP "a", $1A
-	CHARMAP "b", $1B
-	CHARMAP "c", $1C
-	CHARMAP "d", $1D
-	CHARMAP "e", $1E
-	CHARMAP "f", $1F
-	CHARMAP "g", $20
-	CHARMAP "h", $21
-	CHARMAP "i", $22
-	CHARMAP "j", $23
-	CHARMAP "k", $24
-	CHARMAP "l", $25
-	CHARMAP "m", $26
-	CHARMAP "n", $27
-	CHARMAP "o", $28
-	CHARMAP "p", $29
-	CHARMAP "q", $2A
-	CHARMAP "r", $2B
-	CHARMAP "s", $2C
-	CHARMAP "t", $2D
-	CHARMAP "u", $2E
-	CHARMAP "v", $2F
-	CHARMAP "w", $30
-	CHARMAP "x", $31
-	CHARMAP "y", $32
-	CHARMAP "z", $33
-	CHARMAP ".", $34
-	CHARMAP ",", $35
-	CHARMAP "'", $36
-	CHARMAP "\"", $37
-	CHARMAP "!", $38
-	CHARMAP "?", $39
-	CHARMAP ":", $3A
-	CHARMAP ";", $3B
-	CHARMAP "/", $3C
-	CHARMAP "(", $3D
-	CHARMAP ")", $3E
-	CHARMAP " ", $3F
-	CHARMAP "\n", $40
-	CHARMAP "\t", $80
-	
-BIGBANK = $04
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;set up character map
+NEWCHARMAP ciuChars
+SETCHARMAP ciuChars
 
-VARIABLE = $0003
+CHARMAP "\n", $40
+CHARMAP "\t", $80
 
-NEWACTOR: MACRO
+CHARINDEX = 0
+REPT 64
+CHARINDEX = CHARINDEX + 1
+CHARMAP STRSUB("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz.,'\"!?:;/() ", CHARINDEX, 1), CHARINDEX
+ENDR
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;data structure macros
+
+NEWACTOR: MACRO ;label to start of actor, variable
 	db LOW((\1))
 	db HIGH((\1))
 	db BANK(\1)
 	db (\2)
 ENDM
 
-updateActorMain: MACRO
+BIGBANK = $04
+BIGFILE: MACRO ;label to save the file under, filesize, filepath
+COUNT = 0
+FOR OFFSET, 0, \2, $4000
+SECTION "\1_{X:COUNT}", ROMX, BANK[BIGBANK]
+BIGBANK = BIGBANK + 1
+IF(COUNT == 0)
+\1:
+ENDC
+IF(\2 - OFFSET < $4000)
+INCBIN "../\3", OFFSET, \2-OFFSET
+ELSE
+INCBIN "../\3", OFFSET, $4000
+ENDC
+COUNT = COUNT+1
+ENDR
+ENDM
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;code macros
+
+updateActorMain: MACRO ;label to new function
 	ld l, c
 	ld h, b
 	ld a, LOW(\1)
@@ -86,7 +51,7 @@ updateActorMain: MACRO
 	ld [hl], HIGH(\1)
 ENDM
 
-swapInRom: MACRO
+swapInRom: MACRO ;label in bank you want to switch to
 	ldh a, [rom_bank]
 	push af
 	ld a, BANK(\1)
@@ -94,7 +59,7 @@ swapInRom: MACRO
 	ld [$2000], a
 ENDM
 
-restoreBank: MACRO
+restoreBank: MACRO ;"rom" or "ram" depending on which type needs to be restored
 	pop af
 IF(\1 == "rom")
 	ldh [rom_bank], a
@@ -105,7 +70,7 @@ ELSE
 ENDC
 ENDM
 
-swapInRam: MACRO
+swapInRam: MACRO ;label in bank you want to switch to
 	ldh a, [ram_bank]
 	push af
 	ld a, BANK(\1)
@@ -113,22 +78,8 @@ swapInRam: MACRO
 	ld [$FF70], a
 ENDM
 
-BIGFILE: MACRO
-COUNT = 0
-FOR OFFSET, 0, \2, $4000
-SECTION "\1_{X:COUNT}", ROMX, BANK[BIGBANK]
-BIGBANK = BIGBANK + 1
-IF(COUNT == 0)
-\4:
-ENDC
-IF(\2 - OFFSET < $4000)
-INCBIN "../\3", OFFSET, \2-OFFSET
-ELSE
-INCBIN "../\3", OFFSET, $4000
-ENDC
-COUNT = COUNT+1
-ENDR
-ENDM
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;other files
 
 INCLUDE "../globals.asm"
 INCLUDE "../common.asm"
@@ -156,6 +107,9 @@ INCLUDE "../actors/menu/menuTiles.asm"
 INCLUDE "../actors/menu/menuMap.asm"
 INCLUDE "../actors/menu/menuScroll.asm"
 INCLUDE "../actors/menu/menuLoadText.asm"
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;rst routines
 
 SECTION "RSTHANDL", ROM0[$0000]
 call_hl: ;rst 00
@@ -196,6 +150,9 @@ rst_38:
 	jr rst_38
 	ds 6, $00
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;interrupt jumps
+
 SECTION "INTERRUPTS", ROM0[$0040]
 int_vblank:
 	jp VBLANK
@@ -204,16 +161,17 @@ int_lcdc:
 	reti
 	ds 7, $00
 int_timer:
-	push af
-	push hl
 	jp playSample
-	ds 3, $00
+	ds 5, $00
 int_serial:
 	reti
 	ds 7, $00
 int_joypad:
 	reti
 	ds 7, $00
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;fixed data - cartridge header and padding
 
 SECTION "EMPTY", ROM0[$0068]
 ds $98
