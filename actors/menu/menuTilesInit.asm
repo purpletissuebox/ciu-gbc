@@ -17,10 +17,6 @@ menuTilesInit:
 	
 	updateActorMain menuTilesInit.initialAttr
 	
-	;ld hl, CURRENTCHUNK
-	;add hl, bc
-	;ld [hl], $0B
-	
 	ld hl, VARIABLE
 	add hl, bc
 	ld a, [hl]
@@ -322,4 +318,4 @@ menu_attr:
 	.end
 	
 ;theBigAssMenuBkg:
-	BIGFILE menubackground, $10000, assets/gfx/bkg/menu/menuTiles.bin, theBigAssMenuBkg
+	BIGFILE theBigAssMenuBkg, $10000, assets/gfx/bkg/menu/menuTiles.bin
