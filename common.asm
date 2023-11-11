@@ -1,5 +1,9 @@
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;common.asm - contains general purpose functions and drivers in bank 0
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
 SECTION "ENTRY", ROM0[$0150]
-entry:
+entry: ;jumps from cart header, initializes rom+ram and runs init
 	cp $11
 	jr nz, @ ;do not play the game on dmg
 	ld a, $01
@@ -8,13 +12,13 @@ entry:
 	jp init
 
 SECTION "CODE_0", ROM0[$0160]
-init:
+init: ;puts all hardware registers into a known state, loads minimal text graphics, 
 	di
 	ld sp, $D000
 	xor a
 	ld c, $7F
 	ld hl, $FF80
-	rst $08 ;init hram
+	rst $08 ;init stack pointer + hram
 	
 	ld hl, oam_routine
 	ld de, init_data.oam_data
@@ -53,11 +57,11 @@ init:
 	rst $08 ;init colors
 	
 	ld a, $01
-	ldh [$FFFF], a ;vblank interrupt
-	ld a, $00
-	ldh [$FF06], a ;timer mod
-	ld a, $06
-	ldh [$FF07], a ;enable timer + set speed to 64kHz
+	ldh [$FFFF], a ;enable vblank interrupt
+	ld a, $FE
+	ldh [$FF06], a ;timer mod (fire every other clock)
+	ld a, $07
+	ldh [$FF07], a ;enable timer + set speed to 8kHz
 	
 	xor a
 	ldh [$FF02], a
@@ -70,22 +74,26 @@ init:
 	ldh [$FF49], a
 	ldh [$FF4A], a
 	ld a, $07
-	ldh [$FF4B], a ;io ports
+	ldh [$FF4B], a ;zero out serial, graphical, and sound io ports
 	
 	ld a, $E3
 	ld [$FF40], a
 	ldh a, [$FF41]
 	and $07
-	ldh [$FF41], a ;lcd
+	ldh [$FF41], a ;enable window + sprite layers, choose memory regions, and disable stat interrupt sources
 	
 	ld a, $01
 	ldh [rom_bank], a
-	ld a, $02
 	ldh [ram_bank], a
 	xor a
-	ldh [vram_bank], a ;banks
+	ldh [vram_bank], a
 	ld a, $03
-	ldh [rng_seed], a
+	ldh [rng_seed], a ;initialize system hram variables
+	
+	ld hl, first_actor
+	ld de, init_data.actor_data
+	ld c, init_data.actor_end - init_data.actor_data
+	rst $10 ;init global linked list ptrs
 	
 	ld hl, ACTORHEAP
 	ld a, LOW(readJoystick)
@@ -94,22 +102,16 @@ init:
 	ldd [hl], a
 	xor a
 	ld [ACTORHEAP + ACTORSIZE - 2], a
-	ld [ACTORHEAP + ACTORSIZE - 1], a
+	ld [ACTORHEAP + ACTORSIZE - 1], a ;create root node for actor linked list
 	
 	ld c, (ACTORHEAP.end - ACTORHEAP)/ACTORSIZE
 	ld de, ACTORSIZE
-	
 	.clearActorSpace:
 		add hl, de
 		ldi [hl], a
 		ldd [hl], a
 		dec c
-	jr nz, init.clearActorSpace
-	
-	ld hl, first_actor
-	ld de, init_data.actor_data
-	ld c, init_data.actor_end - init_data.actor_data
-	rst $10 ;init actor ptrs
+	jr nz, init.clearActorSpace ;zero out remaining actor heap
 	
 	ld a, BANK(fade_timer)
 	ldh [$FF70], a
@@ -121,7 +123,7 @@ init:
 	ldi [hl], a
 	xor a
 	ld [bc], a
-	ld [hl], a ;colors
+	ld [hl], a ;init fade timers
 	
 	ld a, BANK(music_stuff)
 	ldh [$FF70], a
@@ -130,7 +132,7 @@ init:
 	ld hl, music_code
 	ld bc, frequency_table.end - loadNote
 	ld de, loadNote
-	call bcopy	;sound functions
+	call bcopy	;copy sound functions to ram
 	
 	ld hl, $FF24
 	ld a, $77
@@ -138,7 +140,7 @@ init:
 	ld a, $FF
 	ldi [hl], a
 	ld a, $80
-	ldi [hl], a ;master sound registers
+	ldi [hl], a ;enable global sound registers
 	
 	xor a
 	ld bc, $1410
@@ -146,19 +148,18 @@ init:
 		ldh [c], a
 		inc c
 		dec b
-	jr nz, init.soundLoop ;channel sound registers
+	jr nz, init.soundLoop ;disable individual channel sound registers
 	
 	ld de, init_data.logo_actor
 	call spawnActor
+	call loadGame ;load save file and first actor in prep for gameplay
 	
-	call loadGame
 	.waitForVBlank:
 		ldh a, [$FF44]
 		cp $91
 	jr nz, init.waitForVBlank
-	
 	ei
-	jp MAIN
+	jp MAIN ;as soon as we enter vblank, start the game
 
 VBLANK:
 	push af
@@ -373,19 +374,20 @@ readJoystick:
 	ldh [$FF00], a
 	ret
 
-spawnActor: ;bc = old actor, de = ptr to new actor struct
+spawnActor: ;de = ptr to new actor struct
 	push bc
 	
+	;step 1 - find end of linked list
 	ldh a, [first_actor]
 	ld c, a
 	ldh a, [first_actor + 1]
-	ld b, a
+	ld b, a ;bc = start of linked list
 	
 	.searchLoop:
 		ld hl, ACTORSIZE - 2
 		add hl, bc
 		ldi a, [hl]
-		or [hl]
+		or [hl] ;traverse linked list until current_actor.next is null
 			jr z, spawnActor.foundEnd
 			
 		ldd a, [hl]
@@ -393,6 +395,7 @@ spawnActor: ;bc = old actor, de = ptr to new actor struct
 		ld c, [hl]
 	jr spawnActor.searchLoop
 	
+	;step 2 - append our actor
 	.foundEnd:
 		ldh a, [next_actor+1]
 		ldd [hl], a
@@ -400,39 +403,43 @@ spawnActor: ;bc = old actor, de = ptr to new actor struct
 		ldh a, [next_actor]
 		ld [hl], a
 		ld l, a
-		ld h, b
+		ld h, b ;current_actor.next AND hl = future home of our new actor
 		
 		ld c, $04
-		rst $10
+		rst $10 ;copy our actor into the spot
 		xor a
 		ld c, ACTORSIZE - 4
-		rst $08
+		rst $08 ;and zero out its memory
 
 	ld bc, ACTORSIZE - 1
 	ld hl, ACTORHEAP + 1
 	
+	
+	;step 3 - update the global pointer to the next free slot
 	.findEmpty:
 		add hl, bc
 		ldi a, [hl]
 		or [hl]
-	jr nz, spawnActor.findEmpty
+	jr nz, spawnActor.findEmpty ;search through memory sequentially (NOT like a linked list) to find an unused slot
 	
 	dec hl
 	ld a, l
 	ldh [next_actor], a
 	ld a, h
-	ldh [next_actor+1], a
+	ldh [next_actor+1], a ;write to global variable
 	
 	pop bc
-	ret
+	ret ;"returns" de = ptr to byte following actor struct
 		
 removeActor: ;de = actor that will be killed
 	push bc
+	
+	;step 1 - find which actor points to ours
 	ldh a, [first_actor]
 	ld l, a
 	ldh a, [first_actor + 1]
 	ld h, a
-	ld bc, ACTORSIZE - 2
+	ld bc, ACTORSIZE - 2 ;hl = ptr to first actor
 	
 	.search:
 		add hl, bc
@@ -440,7 +447,7 @@ removeActor: ;de = actor that will be killed
 		sub e
 	jr nz, removeActor.wrongActor
 		ld a, [hl]
-		sub d
+		sub d ;traverse linked list until current_actor.next == our actor
 			jr z, removeActor.targetFound	
 	.wrongActor:
 		ldd a, [hl]
@@ -448,22 +455,23 @@ removeActor: ;de = actor that will be killed
 		ld h, a
 	jr removeActor.search
 	
+	;step 2 - make previous actor "skip over" ours, removing us from the chain
 	.targetFound:
 	ld c, l
-	ld b, h
+	ld b, h ;bc = prev.next
 	ld hl, ACTORSIZE - 1
-	add hl, de ;7
+	add hl, de ;hl = us.next
 	
 	ldd a, [hl]
 	ld [bc], a
 	dec bc
 	ld a, [hl]
-	ld [bc], a
+	ld [bc], a ;copy our next actor into the previous actor's
 	
 	xor a
 	ld [de], a
 	inc de
-	ld [de], a
+	ld [de], a ;mark our actor as empty
 	
 	pop bc
 	ret
@@ -520,12 +528,12 @@ submitGraphicsTask: ;bc = submitting actor
 	reti
 	
 GFXTASK: MACRO
-	dw ((BANK(\1) & $07) | (\1))
-	db BANK(\1)
-	dw (\2 + \3) | BANK(\2)
-	db ((\1.end - \1) >> 4) - 1
-	db $FF
-	db $FF
+	dw ((BANK(\1) & $07) | (\1)) ;source address + ram bank (lower bits are a dont care for rom copies)
+	db BANK(\1)                  ;source's rom bank (don't care for ram copies)
+	dw (\2 + \3) | BANK(\2)      ;destination region + address in vram
+	db ((\1.end - \1) >> 4) - 1  ;calculate size based on ".end" tag
+	db $FF                       ;padding
+	db $FF                       ;padding
 ENDM
 	
 roll_rng:
@@ -547,6 +555,7 @@ roll_rng:
 	ld l, a
 	xor h
 	ld h, a
+
 	ldh [rng_seed], a
 	ld a, l
 	ldh [rng_seed+1], a
@@ -559,78 +568,16 @@ get_rng8:
 	pop hl
 	ret
 	
-/*playSample:
-	ldh a, [rom_bank]
-	push af
-	ldh a, [ram_bank]
-	push af
-	ld a, BANK(the_sample)
-	ldh [$FF70], a
-	ld hl, the_sample
-	ldi a, [hl]
-	ld h, [hl]
-	ld l, a
-	
-	or h
-	jr nz, playSample.sampleExists
-	
-	ldh [$FF1A], a
-	jr playSample.exit
-	
-	.sampleExists:	
-	ld a, [the_sample+2]
-	ld [$2000], a
-	
-	ldh a, [$FF25]
-	and $BB
-	ldh [$FF25], a
-	xor a
-	ldh [$FF1A], a
-DEST = $FF30
-REPT 16
-ldi a, [hl]
-ldh [DEST], a
-DEST = DEST+1
-ENDR
-	ld a, $80
-	ldh [$FF1A], a
-	ldh a, [$FF25]
-	or $44
-	ldh [$FF25], a
-	ld a, $87
-	ldh [$FF1E], a
-	
-	ld hl, the_sample
-	ld a, [hl]
-	add $10
-	ldi [hl], a
-	ld a, [hl]
-	adc $00
-	ldi [hl], a
-	add $80
-	ld a, [hl]
-	adc $00
-	ldd [hl], a
-	ld a, [hl]
-	and $7F
-	or $40
-	ld [hl], a
-	
-.exit:
-	pop af
-	ldh [$FF70], a
-	pop af
-	ld [$2000], a
-	pop hl
-	pop af
-reti*/
-
 playSample:
 	push af
 	push hl
-	swapInRam music_stuff
-	ldh a, [rom_bank]
+	ldh a, [$FF70]
 	push af
+	ldh a, [rom_bank]
+	push af ;back up registers + banks
+	
+	ld a, BANK(music_stuff)
+	ldh [$FF70], a
 	ld hl, the_sample_bank
 	ldd a, [hl]
 	ld [$2000], a
@@ -641,7 +588,7 @@ playSample:
 	ld a, $BB
 	ldh [$FF25], a
 	xor a
-	ldh [$FF1A], a
+	ldh [$FF1A], a ;disable ch3
 	
 WAVEPTR = $FF30
 REPT 16
@@ -669,7 +616,7 @@ ENDR
 	ld a, $FF
 	ldh [$FF25], a
 	ld a, $87
-	ldh [$FF1E], a
+	ldh [$FF1E], a ;reenable ch3
 	
 	restoreBank "rom"
 	restoreBank "ram"
@@ -677,12 +624,13 @@ ENDR
 	pop af
 	reti
 
-bcopy_banked: ;b = bank, c = size >> 4, de = src, hl = dest
+bcopy_banked: ;b = bank, c = size >> 4 (number of tiles), de = src, hl = dest
 	ldh a, [rom_bank]
 	push af
 	ld a, b
 	ldh [rom_bank], a
-	ld [$2000], a
+	ld [$2000], a ;swap in bank "b"
+	
 	xor a
 	sla c
 	rla
@@ -692,13 +640,15 @@ bcopy_banked: ;b = bank, c = size >> 4, de = src, hl = dest
 	rla
 	sla c
 	rla
-	ld b, a
-	call bcopy
+	ld b, a ;restore bc = size (c << 4 = size >> 4 << 4 = size)
+	call bcopy ;do the copy
+	
 	pop af
 	ldh [rom_bank], a
 	ld [$2000], a
+	ret
 
-saveGame:
+saveGame: ;enable sram, copy over, disable sram
 	swapInRam save_file
 	ld a, $0A
 	ld [$1000], a
@@ -711,7 +661,7 @@ saveGame:
 	restoreBank "ram"
 	ret
 
-loadGame:
+loadGame: ;enable sram, copy over, disabel sram
 	swapInRam save_file
 	ld a, $0A
 	ld [$1000], a
@@ -724,7 +674,7 @@ loadGame:
 	restoreBank "ram"
 	ret
 	
-clearSprites:
+clearSprites: ;e = number of sprites to clear, preserves tile IDs
 	swapInRam shadow_oam
 	ld hl, shadow_oam
 	xor a
@@ -738,10 +688,10 @@ clearSprites:
 	restoreBank "ram"
 	ret
 	
-loadString:
+loadString: ;de = ptr to string to load, copies chars of [de] into OAM as tile IDs
 	push bc
-	ld bc, $0004
-	ld hl, shadow_oam + 2
+	ld bc, $0004 ;save bc to use as fast loop counter
+	ld hl, shadow_oam + 2 ;tile ID
 	add l
 	ld l, a
 	swapInRam shadow_oam
@@ -749,7 +699,7 @@ loadString:
 	.loop:
 		ld a, [de]
 		cp "\t"
-			jr z, loadString.break
+			jr z, loadString.break ;loop while we dont have a terminator character
 		inc de
 		ld [hl], a
 		add hl, bc
