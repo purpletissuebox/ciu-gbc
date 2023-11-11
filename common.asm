@@ -12,7 +12,7 @@ entry: ;jumps from cart header, initializes rom+ram and runs init
 	jp init
 
 SECTION "CODE_0", ROM0[$0160]
-init: ;puts all hardware registers into a known state, loads minimal text graphics, 
+init: ;puts all hardware registers into a known state, loads minimal text graphics into sprite vram and load first actor into heap
 	di
 	ld sp, $D000
 	xor a
@@ -161,7 +161,12 @@ init: ;puts all hardware registers into a known state, loads minimal text graphi
 	ei
 	jp MAIN ;as soon as we enter vblank, start the game
 
-VBLANK:
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+VBLANK: ;graphics handler that runs once per frame.
+;performs oam dma, copies scroll registers, and loads colors from buffers
+;also handles "graphics tasks" by jumping to some ram code which jumps back midway through the handler a la Duff's device
+;graphics tasks contain src-dest-size so can handle maps, attr, and tiles.
 	push af
 	push bc
 	push de
@@ -208,15 +213,15 @@ VBLANK:
 	call oam_routine
 	
 	xor a
-	ldh [num_tiles], a ;0 tiles in use
-	ldh [actors_done], a
+	ldh [num_tiles], a ;free up gfx task space now that they are all done
+	ldh [actors_done], a ;allow actors to run again
 	ld hl, next_task
 	ld a, LOW(TASKLIST)
 	ldi [hl], a
 	ld a, HIGH(TASKLIST) ;init task list ptr
 	ldi [hl], a
 	
-	ei
+	ei ;done with timing critical portion, the remaining stuff can be done in hblank
 	
 	ld hl, shadow_scroll
 	ldi a, [hl]
