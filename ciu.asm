@@ -8,8 +8,8 @@ CHARMAP "\t", $80
 
 CHARINDEX = 0
 REPT 64
+CHARMAP STRSUB("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz.,'\"!?:;/() ", CHARINDEX+1, 1), CHARINDEX
 CHARINDEX = CHARINDEX + 1
-CHARMAP STRSUB("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz.,'\"!?:;/() ", CHARINDEX, 1), CHARINDEX
 ENDR
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
