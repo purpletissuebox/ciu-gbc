@@ -36,7 +36,10 @@ loop_point: MACRO
 ENDM
 	
 infinite_loop: MACRO
-	db $80, $00
+	db $81, $01
+	db HIGH(.m_\1_\2)
+	db LOW(.m_\1_\2)
+	db $81, $01
 	db HIGH(.m_\1_\2)
 	db LOW(.m_\1_\2)
 ENDM

@@ -157,9 +157,10 @@ getInstrument: ;d = channel ID, [bc] = instrument index
 	ld e, a ;add and return ptr in es
 	ret
 	
-loopChannel: ;a = [bc] = (80 | loop flags), d = channel ID
+loopChannel: ;a = (80 | loop flags), [bc] = loop mask, d = channel ID
 ;each loop flag that is provided is XORd with the current loop status.
-;the first time around (current = 0), the flags will go high and we will loop
+;a mask is used so you can write to certain flags and read from others.
+;the first time around, the flags will go high and we will loop
 ;the second time around, the XOR will cancel them out, flags go low and we continue
 	and $7F ;a = loop flag(s) that should be checked
 	ld e, a
@@ -176,6 +177,7 @@ loopChannel: ;a = [bc] = (80 | loop flags), d = channel ID
 	ld e, a ;e = new flags
 	
 	ld a, [bc] ;now the entire flag byte is toggled but we might still have unwanted flags so mask them out
+	inc bc
 	and e
 	jr nz, loopChannel.YesLoop
 		inc bc ;if they remain unset, skip the "note" 
@@ -183,15 +185,14 @@ loopChannel: ;a = [bc] = (80 | loop flags), d = channel ID
 		jr loopChannel.NoLoop
 		
 	.YesLoop:
-		dec hl ;otherwise, copy in new ptr
+		dec hl ;otherwise, copy in new ptr (in rom it is big endian for easy copying)
 		ld a, [bc]
 		inc bc
 		ldd [hl], a
 		ld a, [bc]
-		inc bc
 		ldi [hl], a
 		ld c, a
-		ld b, [hl]
+		ld b, [hl] ;resume processing notestream at the loop point
 	
 	.NoLoop:
 	jp loadNoteRAM + (loadNote.return - loadNote) ;proceed to load the next note, regardless of it it was forwards or backwards
