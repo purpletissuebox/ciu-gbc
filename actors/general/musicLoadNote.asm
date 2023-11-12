@@ -177,11 +177,7 @@ loopChannel: ;a = [bc] = (80 | loop flags), d = channel ID
 	
 	ld a, [bc] ;now the entire flag byte is toggled but we might still have unwanted flags so mask them out
 	and e
-	ld e, a ;???;e = relevant flags
-	ld a, [bc]
-	inc bc
-	xor e ;???
-	jr z, loopChannel.YesLoop
+	jr nz, loopChannel.YesLoop
 		inc bc ;if they remain unset, skip the "note" 
 		inc bc
 		jr loopChannel.NoLoop
@@ -203,14 +199,11 @@ loopChannel: ;a = [bc] = (80 | loop flags), d = channel ID
 loadPCM: ;bc = ptr to instrument.settings
 ;initializes pcm-related variables based on a ptr to a pcm struct
 ;the struct contains a start time, followed by a ptr to the wave data.
-	ld hl, pcm_timer
-	ld [hl], $00
-	inc hl
 	inc bc ;[bc] = ptr to pcm struct
 	
-	;ld hl, pcm_timer
-	;xor a
-	;ldi [hl], a ;reset timer
+	ld hl, pcm_timer
+	xor a
+	ldi [hl], a ;reset timer
 	
 	ld a, [bc]
 	inc bc
