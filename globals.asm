@@ -89,15 +89,15 @@ music_stuff:
 
 music_code:
 	loadNoteRAM:
-		ds $8C
+		ds $8B
 	getPitchRAM:
 		ds $0F
 	getInstrumentRAM:
 		ds $1F
 	loopChannelRAM:
-		ds $27
+		ds $23
 	loadPCMRAM:
-		ds $3B
+		ds $3A
 	doFXRAM:
 		ds $33
 	
@@ -106,7 +106,7 @@ music_code:
 	updateDutyRAM:
 		ds $34
 	updateVolumeRAM:
-		ds $54
+		ds $50
 	updatePitchRAM:
 		ds $3F
 	updatePCMRAM:
