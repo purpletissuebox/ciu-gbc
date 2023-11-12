@@ -41,13 +41,12 @@ loadNote: ;d = channel ID
 	ldd [hl], a ;save wavelength to channel status, hl now points to volume
 	
 	ld a, [bc]
-	and $F0 ;get volume
+	inc bc
 	ld e, a
 	swap e
-	or e ;???
-	ld [hl], a
-	ld a, [bc]
-	inc bc
+	and $0F ;get volume
+	ldi [hl], a
+	ld a, e
 	and $0F ;get effect
 		call nz, doFXRAM
 	
@@ -130,6 +129,7 @@ getPitch: ;a = midi key
 	ret
 	
 getInstrument: ;d = channel ID, [bc] = instrument index
+;based on the channel and the instrument ID number, returns a pointer to that instrument.
 	ld hl, inst_lists
 	ld a, d
 	add a
@@ -246,7 +246,7 @@ loadPCM: ;bc = ptr to instrument.settings
 	set 2, [hl] ;enable timer interrupt
 	ret ;timer interrupt will set ch3 dac, wavelength hi, trigger, etc.
 	
-doFX: ;hl = channel wavelength lo
+doFX: ;a = effect ID, [hl] = channel wavelength lo, [bc] = effect data
 	.1: ;freq sweep
 	dec a
 	jr nz, doFX.2

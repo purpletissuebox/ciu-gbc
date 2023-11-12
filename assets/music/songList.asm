@@ -23,7 +23,7 @@ sixtyfourthnote EQUS "$01"
 
 note: MACRO ;\1 = note name, \2 = octave, \3 = volume, \4 = inst ID, \5 = length
 	db (\1) + 12*((\2) - 2)
-	db (\3) << 4
+	db (\3) ;<< 4
 	db (\5)
 	db (\4)
 ENDM

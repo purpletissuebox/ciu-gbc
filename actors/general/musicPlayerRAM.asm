@@ -147,13 +147,10 @@ updateVolume: ;bc = ptr to instrument, d = channel ID
 	add a
 	add a
 	add l
-	ld l, a ;hl points to old volume
+	ld l, a
 	
-	ld a, [hl]
-	and $F0 ;???
-	or e
-	ld e, [hl]
-	ld [hl], a ;???
+	ld a, [hl] ;get old volume
+	ld [hl], e ;save new volume
 	sub e ;old vol - new vol = # of steps we have to take DOWN
 		jr z, updateVolume.done
 	or $F0 ;we are actually going to be taking steps UP. instead of calculating (10-(step%10)) and doing that many loops, we instead take ((step%10)-10) and count in reverse. we use OR to simultaneously do these operations.
@@ -342,8 +339,8 @@ note2SoundReg: ;c = io port corresponding to the current channel, hl = ptr to cu
 	
 	bit 7, d
 	jr z, note2SoundReg.skipVol
+		swap b
 		ld a, b ;if we need to retrigger, also add the corresponding bit in the volume io port
-		and $F0;???
 		or $08
 		ldh [c], a
 	
