@@ -41,21 +41,21 @@ loadLogoGraphics:
 SECTION "LOGO TILES", ROMX
 align 4
 tissue_tiles1:
-	INCBIN "../assets/gfx/bkg/title/tissueTiles.bin", $0000, $0600
+	INCBIN "../assets/gfx/bkg/logo/tissueTiles.bin", $0000, $0600
 	.end
 	
 tissue_tiles2:
-	INCBIN "../assets/gfx/bkg/title/tissueTiles.bin", $0600, $0600
+	INCBIN "../assets/gfx/bkg/logo/tissueTiles.bin", $0600, $0600
 	.end
 	
 tissue_tiles3:
-	INCBIN "../assets/gfx/bkg/title/tissueTiles.bin", $0C00, $0500
+	INCBIN "../assets/gfx/bkg/logo/tissueTiles.bin", $0C00, $0500
 	.end
 	
 tissue_map:
-	INCBIN "../assets/gfx/bkg/title/tissueMap.bin"
+	INCBIN "../assets/gfx/bkg/logo/tissueMap.bin"
 	.end
 	
 tissue_attr:
-	INCBIN "../assets/gfx/bkg/title/tissueAttr.bin"
+	INCBIN "../assets/gfx/bkg/logo/tissueAttr.bin"
 	.end
