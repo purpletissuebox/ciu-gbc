@@ -78,6 +78,7 @@ updateDuty: ;bc = ptr to instrument, d = channel ID
 	add l
 	ld l, a
 	ld e, [hl] ;e = inst string index
+	.afterFix:
 	inc [hl] ;increment duty timer
 	
 	ld hl, INSTDUTY
@@ -115,7 +116,7 @@ updateDuty: ;bc = ptr to instrument, d = channel ID
 	add l
 	ld l, a
 	ld [hl], e ;save it over the old timer
-	jr updateDuty
+	jr updateDuty.afterFix
 	
 updateVolume: ;bc = ptr to instrument, d = channel ID
 ;locates new volume value based on instrument and writes to the current channel's io ports to set that volume
@@ -126,6 +127,7 @@ updateVolume: ;bc = ptr to instrument, d = channel ID
 	add l
 	ld l, a
 	ld e, [hl] ;e = inst string index
+	.afterFix:
 	inc [hl] ;increment vol timer
 	
 	ld hl, INSTVOL
@@ -153,7 +155,7 @@ updateVolume: ;bc = ptr to instrument, d = channel ID
 	ld [hl], e ;save new volume
 	sub e ;old vol - new vol = # of steps we have to take DOWN
 		jr z, updateVolume.done
-	or $F0 ;we are actually going to be taking steps UP. instead of calculating (10-(step%10)) and doing that many loops, we instead take ((step%10)-10) and count in reverse. we use OR to simultaneously do these operations.
+	and $0F ;1 step down = 15 steps up so take the answer mod 16
 	ld e, a
 	
 	ld hl, $FF12
@@ -171,7 +173,7 @@ updateVolume: ;bc = ptr to instrument, d = channel ID
 		ld [hl], a
 		ld a, $18
 		ld [hl], a
-		inc e
+		dec e
 	jr nz, updateVolume.loop ;raise the volume one tick per loop
 	
 	.done:
@@ -188,7 +190,7 @@ updateVolume: ;bc = ptr to instrument, d = channel ID
 	add l
 	ld l, a
 	ld [hl], e ;save it over the old timer
-	jr updateVolume
+	jr updateVolume.afterFix
 	
 updatePitch: ;bc = ptr to instrument, d = channel ID
 ;locates new pitch adjustment based on instrument and writes it to the current channel's status
@@ -199,6 +201,7 @@ updatePitch: ;bc = ptr to instrument, d = channel ID
 	add l
 	ld l, a
 	ld e, [hl] ;e = inst string index
+	.afterFix:
 	inc [hl] ;increment pitch timer
 	
 	ld hl, INSTPITCH
@@ -245,7 +248,7 @@ updatePitch: ;bc = ptr to instrument, d = channel ID
 	add l
 	ld l, a
 	ld [hl], e ;save it over the old timer
-	jr updatePitch
+	jr updatePitch.afterFix
 	
 updatePCM:
 ;scans through current pcm struct to find which sample should be playing and load it
