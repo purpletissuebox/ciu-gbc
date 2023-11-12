@@ -1,10 +1,20 @@
 SECTION "MUSIC PLAYER ROM", ROMX
-initSong:
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;music related functions that live in rom
+;most of the actual music driver is loaded into ram during init because they need to access data in other rom banks.
+;the only functions to stay behind are for intializing a song, advancing the timer, and calling the ram code.
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+VARIABLE = $0003
+
+initSong: ;initializes music variables accoring to a song struct (see assets/music/songList.asm)
+;the struct contains a pointer to a string of notes for each channel, a pointer to an instrument array for each channel, the tempo, and a starting waveform for ch3 (total 30 bytes). 
 	updateActorMain runSong
 	
 	ld hl, VARIABLE
 	add hl, bc
-	ld a, [hl]
+	ld a, [hl] ;a = index into song list
 	ld de, song_list
 	ld l, $00
 	rra
@@ -43,7 +53,7 @@ initSong:
 	ld e, a
 	ld a, d
 	adc $00
-	ld d, a
+	ld d, a ;index into waveform table (for now use quick and dirty *16)
 	
 	xor a
 	ldh [$FF1A], a
@@ -56,7 +66,7 @@ initSong:
 	ld hl, inst_ptrs
 	pop de
 	ld c, inst_ptrs.end - inst_ptrs
-	rst $10
+	rst $10 ;initialize each instrument to ID #0
 	
 	restoreBank "ram"
 	ret
@@ -71,11 +81,11 @@ initSong:
 	db $03,$69,$CF,$CA,$85,$31,$36,$8A,$75,$8A,$DB,$97,$53,$68,$AC,$84 ;6 - synth2
 	db $A8,$42,$24,$8A,$AC,$CA,$87,$8B,$DE,$DA,$65,$57,$99,$83,$10,$13 ;7 - sagaia wave
 	
-runSong:
+runSong: ;main loop for music driver
 	swapInRam music_stuff
 	
-	ld d, $00
-	call tickTimer
+	ld d, $00 ;optimization - we need d = 0 as a loop counter later but can use it as a fast ld a, $00 now
+	call tickTimer ;advance the current timestamp
 	
 	.loop: ;for each channel, load a new note if the wakeup time is less than the current time
 		ld bc, chnl_timers
@@ -83,7 +93,7 @@ runSong:
 		add a
 		add d
 		add c
-		ld c, a
+		ld c, a ;bc = chnl_timers[i]
 		
 		ld hl, global_timer
 		ld a, [bc]
@@ -97,27 +107,28 @@ runSong:
 		ld a, [bc]
 		sbc [hl]
 		
-		call c, loadNoteRAM
+		call c, loadNoteRAM ;if global_timer[i] > chnl_timer[i], load a new note
 		
 		inc d
 		bit 2, d
 	jr z, runSong.loop
 	
-	call updateInstrumentsRAM
+	call updateInstrumentsRAM ;write to a note status buffer based on how the instruments change vol, pitch, duty over time
 	
-	ld c, $10
+	ld c, $10 ;io port for ch1 pitch
 	ld hl, chnl_statuses
 	
-	.loop2:
-		call note2SoundRegRAM
+	.loop2: ;for each channel
+		call note2SoundRegRAM ;convert buffer to raw sound register values
 		bit 5, c
 	jr z, runSong.loop2
 	restoreBank "ram"
 	ret
 		
-tickTimer: ;d = 0
+tickTimer: ;remember d = 0 on entry
+;increase the global timer by (tempo + $50)
 	ld hl, beat_increase
-	ldi a, [hl]
+	ldi a, [hl] ;hl now points to global timer
 	
 	add [hl]
 	ldi [hl], a
@@ -126,7 +137,7 @@ tickTimer: ;d = 0
 	ldi [hl], a
 	ld a, d
 	adc [hl]
-	ldi [hl], a
+	ldi [hl], a ;add tempo
 	
 	ld hl, global_timer
 	ld a, $50
@@ -138,7 +149,7 @@ tickTimer: ;d = 0
 	ldi [hl], a
 	ld a, d
 	adc [hl]
-	ldi [hl], a
+	ldi [hl], a ;add $50
 	ret
 
 INCLUDE "../assets/music/songList.asm"
