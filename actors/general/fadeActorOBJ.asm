@@ -1,10 +1,17 @@
 SECTION "FADE SPRITES", ROMX
 
+;;;;;;;;;;;;;;;;;;;;;;;;;
+;fades sprite colors to/from black.
+;takes in an index into a "fade entry" table.
+;each entry tells when and what colors to fade in, as well as how fast.
+;for algorithm comments please see the bkg version, fadeActor.asm
+;;;;;;;;;;;;;;;;;;;;;;;;;
+
 OBJOFFSET = $0040
-TIMER = $000F
-STARTFADE = $0008
-NEXTACTOR = $0007
-COLORCOUNT = $0004
+TIMER = $000A
+NEXTACTOR = $0008
+COLORCOUNT = $0005
+FADESPEED = $0004
 VARIABLE = $0003
 FADESIZE = $06
 COLORSIZE = $02
@@ -14,9 +21,10 @@ setColorsOBJ:
 	updateActorMain setColorsOBJ.wait
 	ld hl, VARIABLE
 	add hl, bc
-	ld a, [hl]
+	ldi a, [hl]
 	add a
-	jr c, setColorsOBJ.instant
+		jr c, setColorsOBJ.instant
+	
 	add a
 	add a
 	ld de, setColorsOBJ.color_table
@@ -25,6 +33,7 @@ setColorsOBJ:
 	ld a, d
 	adc $00
 	ld d, a
+	
 	ld c, FADESIZE
 	rst $10
 	ret
@@ -38,21 +47,24 @@ setColorsOBJ:
 		ld a, d
 		adc $00
 		ld d, a
+		
 		ld a, c
 		ldh [scratch_byte], a
 		ld c, FADESIZE
 		rst $10
-		
 		ldh a, [scratch_byte]
 		ld c, a
+		
 		ld hl, COLORCOUNT
 		add hl, bc
 		ldi a, [hl]
 		add a
 		ld c, a
+		
 		ldi a, [hl]
 		ld e, a
 		ld d, [hl]
+		
 		swapInRam shadow_palettes
 		ld hl, shadow_palettes + OBJOFFSET
 		rst $10
@@ -63,6 +75,7 @@ setColorsOBJ:
 		ld hl, NEXTACTOR		
 		add hl, bc
 		ld a, [hl]
+		
 		add a
 		add a
 		ld de, setColorsOBJ.actor_table
@@ -81,33 +94,32 @@ setColorsOBJ:
 	add hl, bc
 	ld a, [hl]
 	inc [hl]
-	
-	ld hl, STARTFADE
-	add hl, bc
+	dec hl
 	cp [hl]
-	jr z, setColorsOBJ.start
-	ret
+		ret nz
 	
 	.start:
 		swapInRam fade_timer
 		updateActorMain setColorsOBJ.fade
-		ld hl, VARIABLE
+		ld hl, FADESPEED
 		add hl, bc
-			xor a
+		xor a
 		bit 7, [hl]
+		
 		jr z, setColorsOBJ.in
 			ld a, $20
-		
 		.in:
-			ld hl, obj_fade_timer+1
-			ldd [hl], a
-			ld [hl], $00
+		
+		ld hl, obj_fade_timer+1
+		ldd [hl], a
+		ld [hl], $00
 			
 		ld hl, COLORCOUNT
 		add hl, bc
 		ldi a, [hl]
 		add a
 		ld c, a
+		
 		ldi a, [hl]
 		ld e, a
 		ld d, [hl]
@@ -118,7 +130,7 @@ setColorsOBJ:
 	
 .fade:
 	push bc
-	ld hl, VARIABLE
+	ld hl, FADESPEED
 	add hl, bc
 	ldi a, [hl]
 	ld c, a
@@ -196,6 +208,7 @@ setColorsOBJ:
 		ret
 	
 .rgb5to8:
+
 	ld hl, palette_backup - $1F00 + OBJOFFSET
 	ld a, b
 	add a
@@ -225,6 +238,9 @@ setColorsOBJ:
 	ret
 	
 .darkenColor:
+
+
+
 	ld e, $00
 	ld a, c
 	and a
@@ -261,26 +277,26 @@ setColorsOBJ:
 	ret
 	
 	
-.rgb8to5: ;returns concatinated color in de
+.rgb8to5:
 	ld hl, obj_temp_rgb
-	ldi a, [hl] ;a = 000r rrrr
-	add a
-	add a
-	add a
-	ld e, a ;e = rrrr r000
-	ldi a, [hl] ;a = 000g gggg
-	srl a
-	rr e
-	srl a
-	rr e
-	srl a
-	rr e
-	ld d, a ;de = 0000 00gg gggr rrrr
 	ldi a, [hl]
 	add a
-	add a ;a = 0bbb bb00
+	add a
+	add a
+	ld e, a
+	ldi a, [hl]
+	srl a
+	rr e
+	srl a
+	rr e
+	srl a
+	rr e
+	ld d, a
+	ldi a, [hl]
+	add a
+	add a
 	or d
-	ld d, a ;de = 0bbb bbgg gggr rrrr
+	ld d, a
 	ret
 
 .fadeLUT:
