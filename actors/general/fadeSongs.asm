@@ -1,20 +1,26 @@
 SECTION "FADE MUSIC", ROMX
 
+;;;;;;;;;;;;;;;;;;;;;;;;;
+;fades global music volume to/from silence.
+;takes in an index into a "fade entry" table.
+;each entry tells when and what song to fade in, as well as how fast.
+;;;;;;;;;;;;;;;;;;;;;;;;;
+
 VARIABLE = $0003
-FADESPEED = $0004
-TIMER = $0005
-FADESTART = $0007
-NEXTACTOR = $0008
-MUSICPLAYER = $0009
+FADESPEED = $0004 ;5
+CURRVOL = $0007
+TIMER = $000E
+FADESTART = $000D
+NEXTACTOR = $000C
+MUSICPLAYER = $0008 ;9, A, B
 
 fadeMusic:
 .init:
 	updateActorMain fadeMusic.wait
 	ld hl, VARIABLE
 	add hl, bc
-	ldi a, [hl]
-	inc hl
-		
+	ldi a, [hl] ;get fade entry index
+	
 	ld de, fadeMusic.fade_table
 	add a
 	add a
@@ -22,104 +28,109 @@ fadeMusic:
 	ld e, a
 	ld a, d
 	adc $00
-	ld d, a
+	ld d, a ;de = ptr to entry
 	
 	ld a, [de]
 	inc de
+	ldi [hl], a ;speed
+	add a
+	sbc a ;sign extend to 16 bits
 	ldi [hl], a
 	inc hl
 	inc hl
-	ld a, [de]
-	inc de
-	ldi [hl], a
-	ld a, [de]
-	inc de
-	ldi [hl], a
-		
+	
 	ld a, LOW(initSong)
 	ldi [hl], a
 	ld a, HIGH(initSong)
 	ldi [hl], a
 	ld a, BANK(initSong)
 	ldi [hl], a
-	ld a, [de]
+	ld a, [de] ;actor + song to play
+	inc de
+	ldi [hl], a
+	
+	ld a, [de] ;next actor
+	inc de
+	ldi [hl], a
+	
+	ld a, [de] ;start frame
 	ld [hl], a
 	
-	xor a
-	ldh [$FF24], a
+	ldh a, [$FF24]
+	and $0F
+	ld hl, CURRVOL
+	add hl, bc
+	ldd [hl], a
 	ret
 	
 .wait:
-	ld hl, FADESTART
-	add hl, bc
-	ldd a, [hl]
-	cp [hl]
-	ret z
-	
-	updateActorMain fadeMusic.main
-	
-	ld hl, FADESPEED
+	ld hl, TIMER
 	add hl, bc
 	ld a, [hl]
-	add a
-	ret c
+	inc [hl] ;get current time
+	dec hl
+	cp [hl] ;get desired time
+		ret nz
+	
+	updateActorMain fadeMusic.main
 	
 	ld hl, MUSICPLAYER
 	add hl, bc
 	ld e, l
 	ld d, h
-	jp spawnActor
+	jp spawnActor ;variable for the music player was already written during init
 	
 .main:
-	ld hl, TIMER
+	ld hl, FADESPEED
 	add hl, bc
 	ldi a, [hl]
-	add a
-	ld e, a
-	sbc a
-	ld d, a
+	ld e, [hl]
+	inc hl ;hl now points to current volume fractional byte
 	
-	ld a, e
 	add [hl]
 	ldi [hl], a
-	ld a, d
+	ld a, e
 	adc [hl]
-	ld [hl], a
-	ld e, a
-	swap a
-	or e
-	ldh [$FF24], a
+	ld [hl], a ;add newvol = newvol + change
 	
-	sub $77
-	jr z, fadeMusic.doneUp
-	inc e
-	jr z, fadeMusic.doneDown
+	cp $08 ;trips on both 08 and FF, signifying we are done regardless of direction
+		jr nc, fadeMusic.done
+	
+	swap a ;duplicate volume to higher nibble to write to audio IO
+	or [hl]	
+	ldh [$FF24], a
 	ret
 	
-	.doneDown:
-		xor a
-		ldh [music_on], a
-	.doneUp:
+	.done:
 		ld hl, NEXTACTOR
 		add hl, bc
-		ld a, [hl]
+		ld a, [hl] ;get next actor ID
 		add a
 		add a
+		ld de, fadeMusic.actor_table
+		add e
 		ld e, a
-		ld d, $00
-		ld hl, fadeMusic.actor_table
-		add hl, de
-		ldi a, [hl]
-		ld d, [hl]
+		ld a, d
+		adc $00
+		ld d, a
 		call spawnActor
-		
 		ld e, c
 		ld d, b
 		jp removeActor
 
+FADEMUSICENTRY: MACRO
+IF \3 == "up"
+	db \2 ;fade speed
+ELSE
+	db ((\2) ^ $FF + 1)
+ENDC
+	db \3 ;song to play
+	db \4 ;next actor
+	db \1 ;start frame
+ENDM
+
 .fade_table:
-	db $40, $20, $00, $00 ;speed, start, actor#, song#
-	db $C0, $10, $00
+	FADEMUSICENTRY $20, $40, $00, $00 ;start, speed, song#, actor#
 
 .actor_table:
 	dw dummy_actor
