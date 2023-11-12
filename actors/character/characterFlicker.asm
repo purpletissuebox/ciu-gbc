@@ -9,7 +9,7 @@ characterFlicker:
 	add hl, bc
 	inc [hl]
 	ldd a, [hl]
-	and a, $04
+	and $04
 	rrca
 	ld de, characterFlicker.colors
 	add e

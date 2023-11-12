@@ -1,10 +1,10 @@
 SECTION "FADE MUSIC", ROMX
 
-;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;fades global music volume to/from silence.
 ;takes in an index into a "fade entry" table.
 ;each entry tells when and what song to fade in, as well as how fast.
-;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 VARIABLE = $0003
 FADESPEED = $0004 ;5

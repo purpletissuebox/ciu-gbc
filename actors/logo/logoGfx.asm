@@ -1,5 +1,10 @@
 SECTION "LOGO GFX", ROMX
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;requests for several pieces of graphics data to be loaded into vram for the logo scene.
+;submits one request per frame and waits for each request to succeed before doing the next one.
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
 TASKSDONE = $000A
 
 loadLogoGraphics:
@@ -17,7 +22,7 @@ loadLogoGraphics:
 	ld e, a
 	ld a, d
 	adc $00
-	ld d, a ;de = next incomplete task
+	ld d, a ;de = next remaining incomplete graphics task
 	
 	call loadGraphicsTask
 	jp submitGraphicsTask ;try and submit it this frame

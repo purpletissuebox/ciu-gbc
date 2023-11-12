@@ -1,10 +1,10 @@
 SECTION "FADE", ROMX
 
-;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;fades bkg colors to/from black.
 ;takes in an index into a "fade entry" table.
 ;each entry tells when and what colors to fade in, as well as how fast.
-;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 TIMER = $000A
 NEXTACTOR = $0008

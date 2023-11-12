@@ -1,11 +1,11 @@
 SECTION "FADE SPRITES", ROMX
 
-;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;fades sprite colors to/from black.
 ;takes in an index into a "fade entry" table.
 ;each entry tells when and what colors to fade in, as well as how fast.
 ;for algorithm comments please see the bkg version, fadeActor.asm
-;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 OBJOFFSET = $0040
 TIMER = $000A
