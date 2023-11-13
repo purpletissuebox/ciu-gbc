@@ -1,5 +1,9 @@
 SECTION "TITLETILES", ROMX
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;loads and submits graphics tasks for the title screen scene
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
 TASKSDONE = $000A
 
 loadTitleTiles:

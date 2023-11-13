@@ -86,6 +86,8 @@ setColors:
 		ld e, c
 		ld d, b
 		jp removeActor
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 	
 .wait:
 	ld hl, TIMER
@@ -125,6 +127,8 @@ setColors:
 		rst $10 ;get ptr to colors and copy them to a buffer
 		restoreBank "ram"
 	ret
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 	
 .fade:
 	push bc
@@ -204,6 +208,8 @@ setColors:
 		ld d, b
 		call removeActor
 		ret
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 	
 .rgb5to8: ;b = color ID
 ;load color at that index, separate its channels into R, G, and B, then save to temp_rgb
@@ -234,7 +240,9 @@ setColors:
 	and d
 	ld [temp_rgb+1], a
 	ret
-	
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
 .darkenColor: ;c = fade amount
 ;to fade, set each color component equal to (original intensity)*(fade amt)/31.
 ;as (fade amt) ranges from 0-31, we get linearly increasing intensity from black to full strength.
@@ -273,7 +281,8 @@ setColors:
 	
 	pop bc
 	ret
-	
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 	
 .rgb8to5: ;returns concatinated color in de
 	ld hl, temp_rgb
@@ -296,6 +305,8 @@ setColors:
 	or d
 	ld d, a ;de = 0bbb bbgg gggr rrrr
 	ret
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 	
 FADEENTRY: MACRO
 IF \3 == "up"

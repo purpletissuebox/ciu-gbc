@@ -110,6 +110,8 @@ loadNote: ;d = channel ID
 		
 	restoreBank "rom"
 	ret
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 	
 getPitch: ;a = midi key
 ;we use a lookup table for this due to the nonlinear relationship
@@ -127,7 +129,9 @@ getPitch: ;a = midi key
 	ld e, [hl]
 	set 7, a ;return (8000 | wavelength) in ae
 	ret
-	
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
 getInstrument: ;d = channel ID, [bc] = instrument index
 ;based on the channel and the instrument ID number, returns a pointer to that instrument.
 	ld hl, inst_lists
@@ -156,6 +160,8 @@ getInstrument: ;d = channel ID, [bc] = instrument index
 	adc h
 	ld e, a ;add and return ptr in es
 	ret
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 	
 loopChannel: ;a = (80 | loop flags), [bc] = loop mask, d = channel ID
 ;each loop flag that is provided is XORd with the current loop status.
@@ -196,6 +202,8 @@ loopChannel: ;a = (80 | loop flags), [bc] = loop mask, d = channel ID
 	
 	.NoLoop:
 	jp loadNoteRAM + (loadNote.return - loadNote) ;proceed to load the next note, regardless of it it was forwards or backwards
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 	
 loadPCM: ;bc = ptr to instrument.settings
 ;initializes pcm-related variables based on a ptr to a pcm struct
@@ -246,7 +254,9 @@ loadPCM: ;bc = ptr to instrument.settings
 	ld l, $FF ;hl already points to hram so we get a fast hl = FFFF
 	set 2, [hl] ;enable timer interrupt
 	ret ;timer interrupt will set ch3 dac, wavelength hi, trigger, etc.
-	
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
 doFX: ;a = effect ID, [hl] = channel wavelength lo, [bc] = effect data
 	.1: ;freq sweep
 	dec a

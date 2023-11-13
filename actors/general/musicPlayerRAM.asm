@@ -26,7 +26,7 @@ STATUSDUTY = $0000
 STATUSVOL = $0001
 STATUSPITCH = $0002
 
-;loadNote:
+;loadNote and friends:
 INCLUDE "../actors/general/musicLoadNote.asm"
 
 updateInstruments:
@@ -68,6 +68,8 @@ updateInstruments:
 	
 	restoreBank "rom"
 	ret
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 	
 updateDuty: ;bc = ptr to instrument, d = channel ID
 ;locates new duty value based on instrument and writes it to the current channel's status
@@ -117,6 +119,8 @@ updateDuty: ;bc = ptr to instrument, d = channel ID
 	ld l, a
 	ld [hl], e ;save it over the old timer
 	jr updateDuty.afterFix
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 	
 updateVolume: ;bc = ptr to instrument, d = channel ID
 ;locates new volume value based on instrument and writes to the current channel's io ports to set that volume
@@ -191,6 +195,8 @@ updateVolume: ;bc = ptr to instrument, d = channel ID
 	ld l, a
 	ld [hl], e ;save it over the old timer
 	jr updateVolume.afterFix
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 	
 updatePitch: ;bc = ptr to instrument, d = channel ID
 ;locates new pitch adjustment based on instrument and writes it to the current channel's status
@@ -249,6 +255,8 @@ updatePitch: ;bc = ptr to instrument, d = channel ID
 	ld l, a
 	ld [hl], e ;save it over the old timer
 	jr updatePitch.afterFix
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 	
 updatePCM:
 ;scans through current pcm struct to find which sample should be playing and load it
@@ -287,6 +295,8 @@ updatePCM:
 	ldi a, [hl]
 	ldh [the_sample_bank], a
 	ret
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 	
 killPCM:
 ;sets all the appropriate variables to resume regular wave channel behavior
@@ -311,6 +321,8 @@ killPCM:
 	ld a, $80
 	ldh [$FF1A], a ;reenable ch3
 	ret
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 	
 note2SoundReg: ;c = io port corresponding to the current channel, hl = ptr to current channel status
 	inc c

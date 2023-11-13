@@ -27,6 +27,8 @@ logoManager:
 		ld d, b
 		call removeActor
 	ret
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 	
 .actor_table:
 	NEWACTOR loadLogoGraphics, $00 ;load tiles, map, and attr for logo scene

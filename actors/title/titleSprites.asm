@@ -1,4 +1,10 @@
 SECTION "TITLESPRITES", ROMX
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;fills oam with the correct letters for the title screen.
+;loads tile ID, screen position, and palette.
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
 titleSpriteLoader:
 	push bc
 	swapInRam shadow_oam
@@ -15,7 +21,7 @@ titleSpriteLoader:
 		cp $84 ;loop until the other side of the screen is reached
 	jr nz, titleSpriteLoader.locationLoop
 	
-	xor a
+	xor a ;start filling oam at entry 0
 	ld de, titleSpriteLoader.message
 	call loadString
 	

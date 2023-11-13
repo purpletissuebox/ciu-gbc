@@ -32,8 +32,8 @@ loadLogoGraphics:
 		ld d, b
 		call removeActor
 		ret
-	
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 .gfx_tasks:
 	GFXTASK tissue_tiles1, bkg_tiles0, $0000
