@@ -1,15 +1,20 @@
 SECTION "TITLEMOVEMENT", ROMX
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;animates each sprite with a sine wave
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
 TIMERS = $0010
 
 titleSineWave:
 .init:
+;creates an array of timers for each letter. the positions start offscreen, so earlier times make the letters fall later.
 	ld hl, TIMERS
 	add hl, bc ;hl = array of timers
 	ld de, $060B ;d = space between times / e = array length
 	ld a, $3F
 	.setUp:
-		ldi[hl], a ;initialize timer[i] = 0x3F - 6*i
+		ldi [hl], a ;initialize timer[i] = 0x3F - 6*i
 		sub d
 		dec e
 	jr nz, titleSineWave.setUp
@@ -18,51 +23,50 @@ titleSineWave:
 	ret
 
 .main:
-	ldh a, [ram_bank]
-	push af
-	ld a, BANK(shadow_oam)
-	ldh [$FF70], a
-	ldh [ram_bank], a
+;for each letter, read and imcrement its timer, looping the last 40 frames of the animation.
+;use the timer to index into a sine table and use that value to set the corresponding entry's y-position in oam.
+	swapInRam shadow_oam
 	
 	ld hl, TIMERS
 	add hl, bc
 	ld e, l
 	ld d, h ;de = timer array
-	ld hl, shadow_oam ;hl = oam[i].yPos
+	ld hl, shadow_oam ;hl = oam y position
+	
+	ld a, [de] ;the top of the loop demands a = [de], but for speed we want to read at the bottom, so pre-load for the first iteration
+	
 	.loop:
-		ld bc, titleSineWave.table
-		ld a, [de] ;a = index into sine table
 		inc a
 		jr nz, titleSineWave.noOverflow
-			ld a, $C0 ;loop last 40 frames
+			ld a, $C0 ;loop lasts 40 frames
 		.noOverflow:
 		ld [de], a ;update timer
 		inc de
+		
+		ld bc, titleSineWave.table
 		add c
 		ld c, a
 		ld a, b
 		adc $00
-		ld b, a ;bc = sin(timer[i])
+		ld b, a ;[bc] = sin(timer[i])
+		
 		ld a, [bc]
 		ldi [hl], a ;save to y position of this oam entry
-		inc hl
-		inc hl
-		inc hl ;hl = oam[i+1].yPos
-		ld a, e
-		and $0F
-		sub $0B ;array is aligned to 16 bytes so we can check index via (i = de & 000F)
+		ld bc, $0003
+		add hl, bc ;hl = oam[i+1].yPos
+		
+		ld a, [de] ;a = index into sine table
+		and a ;when we read past the end of the array, there will be a null terminator
 	jr nz, titleSineWave.loop
-	pop af
-	ldh [$FF70], a
-	ldh [ram_bank], a
+	
+	restoreBank "ram"
 	ret
 	
 .cleanup:
-	ldh a, [ram_bank]
-	push af
-	ld a, BANK(shadow_oam)
-	ldh [$FF70], a
-	ldh [ram_bank], a
+;this function is (currently) invoked only when an external force changes this actor's main!
+;should probably poll for start button press and use a timer to clean up instead...
+;it zeros out the y-positions in oam.
+	swapInRam shadow_oam
 	
 	ld e, c
 	ld d, b
@@ -76,9 +80,7 @@ titleSineWave:
 	jr nz, titleSineWave.clearOAM
 	call removeActor
 	
-	pop af
-	ldh [$FF70], a
-	ldh [ram_bank], a
+	restoreBank "ram"
 	ret
 	
 	
