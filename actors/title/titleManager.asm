@@ -1,22 +1,27 @@
 SECTION "TITLEMANAGER", ROMX
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;orchestrates the spawning of all the actors related to the title screen state of the game.
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
 VARIABLE = $0003
 TIMER = $000F
 
-titleActorManager:
+titleActorManager: ;spawn one actor every 56 frames
 	ld hl, TIMER
 	add hl, bc
 	ld a, [hl]
 	inc a
 	cp $56 ;wait for timer
 	ld [hl], a
-	jr nz, titleActorManager.notDone
+		ret nz
 	
 	xor a
-	ld [hl], a
+	ld [hl], a ;reset timer
 	ld hl, VARIABLE
 	add hl, bc
 	ld a, [hl] ;variable = next actor to spawn
+	inc [hl]
 	cp ((titleActorManager.end - titleActorManager.actorTable) >> 2) ;end of table
 	jr z, titleActorManager.done
 	add a
@@ -27,7 +32,6 @@ titleActorManager:
 	ld a, d
 	adc $00
 	ld d, a ;de = actorTable[i]
-	inc [hl] ;increase variable
 	call spawnActor
 	.notDone:
 	ret
