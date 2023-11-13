@@ -68,6 +68,9 @@ initSong: ;initializes music variables accoring to a song struct (see assets/mus
 	ld c, inst_ptrs.end - inst_ptrs
 	rst $10 ;initialize each instrument to ID #0
 	
+	ld a, $01
+	ldh [music_on], a
+	
 	restoreBank "ram"
 	ret
 	
@@ -80,8 +83,19 @@ initSong: ;initializes music variables accoring to a song struct (see assets/mus
 	db $11,$24,$7D,$85,$67,$BE,$ED,$A7,$6D,$95,$45,$75,$A0,$94,$64,$32 ;5 - buzzy lead
 	db $03,$69,$CF,$CA,$85,$31,$36,$8A,$75,$8A,$DB,$97,$53,$68,$AC,$84 ;6 - synth2
 	db $A8,$42,$24,$8A,$AC,$CA,$87,$8B,$DE,$DA,$65,$57,$99,$83,$10,$13 ;7 - sagaia wave
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 	
 runSong: ;main loop for music driver
+	ldh a, [music_on]
+	and a
+	jr nz, runSong.run
+		ld e, c
+		ld d, b
+		call removeActor
+		jp killSong
+	
+	.run:
 	swapInRam music_stuff
 	
 	ld d, $00 ;optimization - we need d = 0 as a loop counter later but can use it as a fast ld a, $00 now
@@ -124,6 +138,8 @@ runSong: ;main loop for music driver
 	jr z, runSong.loop2
 	restoreBank "ram"
 	ret
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 		
 tickTimer: ;remember d = 0 on entry
 ;increase the global timer by (tempo + $50)
@@ -150,6 +166,16 @@ tickTimer: ;remember d = 0 on entry
 	ld a, d
 	adc [hl]
 	ldi [hl], a ;add $50
+	ret
+	
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+killSong:
+;turn off all sound registers
+	ld hl, $FF10
+	ld c, $13
+	xor a
+	rst $08
 	ret
 
 INCLUDE "../assets/music/songList.asm"
