@@ -1,5 +1,10 @@
 SECTION "TITLE_HUNTER", ROMX
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;ends the title screen scene by "hunting down" other title screen actors and killing them.
+;also spawns some new actors to facilitate loading in the new scene.
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
 TIMER = $000F
 SINEACTOR = $0008
 
@@ -10,26 +15,27 @@ titleHunter:
 	ldh a, [next_actor]
 	ldi [hl], a
 	ldh a, [next_actor+1]
-	ldi [hl], a
+	ldi [hl], a ;before spawning the sine wave, record where it will load in
 	ld de, titleHunter.sine_wave
 	call spawnActor
+	
 	updateActorMain titleHunter.main
 ret
-	
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
 .main:
 	ld a, [press_input]
 	and $08
-	ret z
+	ret z ;wait for player to press start
 	
 	xor a
-	ldh [music_on], a
+	ldh [music_on], a ;disable music
 	updateActorMain titleHunter.wait
 	
-	xor a ;a = actor table index
+	xor a
+	ld c, a ;c = actor table index
 	.actorLoop:
-		cp ((titleHunter.end - titleHunter.actor_table) >> 2)
-		ret z
-		ldh [scratch_byte], a
 		ld de, titleHunter.actor_table
 		add a
 		add a
@@ -39,10 +45,14 @@ ret
 		adc $00
 		ld d, a ;de = actorTable[i]
 		call spawnActor
-		ldh a, [scratch_byte]
-		inc a ;i++
-	jr titleHunter.actorLoop
-	
+		inc c ;i++
+		ld a, c
+		cp ((titleHunter.end - titleHunter.actor_table) >> 2)
+	jr nz, titleHunter.actorLoop
+	ret
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
 .wait:
 	ld hl, TIMER
 	add hl, bc
@@ -79,6 +89,8 @@ ret
 		call spawnActor
 	.notYet:
 	ret
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 	
 .sine_wave:
 	NEWACTOR titleSineWave,$00
