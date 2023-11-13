@@ -57,37 +57,36 @@ ret
 	ld hl, TIMER
 	add hl, bc
 	inc [hl]
-	;ld a, $FE ;fadeout takes 53 frames + 80 to start
-	;sub [hl]
-	jr nz, titleHunter.notYet ;wait for fadeout to finish
-		push bc
-		ld hl, SINEACTOR
-		add hl, bc
-		ldi a, [hl]
-		ld d, [hl]
-		ld e, a
-		call removeActor
-		
-		ld e, $0B
-		call clearSprites
-		
-		pop de ;de = self
-		call removeActor
-		
-		swapInRam save_string
-		ld de, save_string
-		ld hl, titleHunter.save_string
-		ld c, $10
-		rst $18
-		
-		ld de, titleHunter.main_menu
-		jr z, titleHunter.saveExists
-			ld de, titleHunter.character_select
-		.saveExists:
-		
-		restoreBank "ram"
-		call spawnActor
-	.notYet:
+	ret nz ;wait for fadeout to finish
+	
+	push bc
+	ld hl, SINEACTOR
+	add hl, bc
+	ldi a, [hl]
+	ld d, [hl]
+	ld e, a
+	call removeActor
+	
+	ld e, $0B
+	call clearSprites ;remove press start text
+	
+	pop de ;de = self
+	call removeActor
+	
+	swapInRam save_string
+	ld de, save_string
+	ld hl, titleHunter.save_string
+	ld c, $10
+	rst $18
+	
+	ld de, titleHunter.main_menu
+	jr z, titleHunter.saveExists
+		;ld de, titleHunter.character_select
+	.saveExists:
+	
+	restoreBank "ram"
+	call spawnActor
+	
 	ret
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
