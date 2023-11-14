@@ -1,5 +1,10 @@
 SECTION "MENU MANAGER", ROMX
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;orchestrates the spawning of several actors related to the menu scene.
+;passes along the most recently played song to each child process as a variable.
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
 TIMER = $000F
 ACTORLIST = $0004
 FIRSTVARIABLE = $0007
@@ -10,7 +15,7 @@ menuManager:
 	ld a, [hl]
 	inc [hl]
 	cp $60 ;wait for timer
-	jr nz, menuManager.exit
+		ret nz
 	
 	ld hl, ACTORLIST
 	add hl, bc
@@ -18,33 +23,35 @@ menuManager:
 	push bc
 	ld c, LOW(menuManager.end - menuManager.actorTable)
 	rst $10
-	pop bc
+	pop bc ;copy actor list into local memory
 
-	ld hl, FIRSTVARIABLE
-	add hl, bc
+
 	swapInRam last_played_song
-	ld a, [last_played_song]
-	ld e, a
+		ld hl, last_played_song
+		ld e, [hl]  ;get last played song
 	restoreBank "ram"
+	
 	ld a, e
-	ld de, ACTORLIST
+	ld de, FIRSTVARIABLE - ACTORLIST + 1 ;de = distance between actors
+	ld hl, FIRSTVARIABLE
+	add hl, bc ;hl = ptr to first actor's variable
 	
 	.variableLoop:
-		bit 0, [hl]
-		jr nz, menuManager.summon
-		ld [hl], a
+		bit 0, [hl] ;check for terminator
+			jr nz, menuManager.summon ;if found, begin spawning them in
+		ld [hl], a ;otherwise, save most recent song as that actor's variable
 		add hl, de
 		jr menuManager.variableLoop
 	.summon:
 	
 	xor a
 	.actorLoop:
-		ldh [scratch_byte], a
+		ldh [scratch_byte], a ;a = loop index
 		add a
 		add a
 		ld hl, ACTORLIST
 		add l
-		ld l, a
+		ld l, a ;hl = offset from start of actor to current entry
 		add hl, bc
 		ld e, l
 		ld d, h ;de = actorTable[i]
@@ -52,12 +59,11 @@ menuManager:
 		ldh a, [scratch_byte]
 		inc a
 		cp ((menuManager.end - menuManager.actorTable) >> 2) ;end of table
-		jr nz, menuManager.actorLoop
+	jr nz, menuManager.actorLoop
 
 	ld e, c
 	ld d, b
 	call removeActor
-.exit:
 	ret
 
 .actorTable:
