@@ -167,6 +167,7 @@ VBLANK: ;graphics handler that runs once per frame.
 ;performs oam dma, copies scroll registers, and loads colors from buffers
 ;also handles "graphics tasks" by jumping to some ram code which jumps back midway through the handler a la Duff's device
 ;graphics tasks contain src-dest-size so can handle maps, attr, and tiles.
+
 	push af
 	push bc
 	push de
@@ -271,21 +272,27 @@ VBLANK: ;graphics handler that runs once per frame.
 	pop af
 	ret
 	
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+	
 bcopy: ;bc = number of bytes to copy, de = source, hl = dest
+;copies a large chunk of data at once by unrolling the loop
+
 	push de
 	push hl
 	xor a
 	or c
 	jr z, bcopy.skip ;skip the 1st loop if copying a multiple of 256 bytes
-	rst $10 ;copy the first C bytes
+		rst $10 ;copy the first C bytes. now the remaining data can be copied in blocks
 	.skip:
-		xor a
-		or b
-		jr z, bcopy.done ;skip 2nd loop if there are no more bytes to copy
+	
+	xor a
+	or b
+	jr z, bcopy.done ;skip 2nd loop if there are no more bytes to copy
+	
 	.Bloop:
 		ld c, $10
 		.Cloop:
-			REPT 16 ;copy C blocks of 16 bytes B times
+			REPT 16 ;copy 16 blocks of 16 bytes B times
 				ld a, [de]
 				inc de
 				ldi [hl], a
@@ -298,12 +305,26 @@ bcopy: ;bc = number of bytes to copy, de = source, hl = dest
 	pop hl
 	pop de
 	ret
+	
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-MAIN:
+MAIN: ;main driver code!
+;the "actor heap" contains a linked list of "actors".
+;each actor contains a pointer to its own function, an 8 bit variable, a pointer to the next actor, and 26 bytes of free memory to do whatever with.
+;the main loop uses a global pointer to the head of the linked list to find and loop through each actor, running its function.
+;at the end, it sets a flag marking the loop as done, advances the rng state, and goes to sleep.
+;when the frame ends, the vblank interrupt will wake up and clear the flag.
+;this way, if a different interrupt wakes MAIN up, the flag is still set and it immediately sleeps again.
+
+;when an actor is run, register bc always points to itself.
+;the actor can discard this value if it wants, but at the cost of not being able to locate its local ram anymore.
+;hl is often used to access the rest of local ram. ld hl, N \ add hl, bc \ ld a, [hl] can be used to access the Nth byte.
+
 	ldh a, [first_actor]
 	ld c, a
 	ldh a, [first_actor + 1]
-	ld b, a
+	ld b, a ;get pointer to head of linked list
+	
 	.doNextActor:
 		push bc ;bc = ptr to actor main
 		ld e, c
@@ -317,35 +338,39 @@ MAIN:
 		ld a, [de]
 		ldh [rom_bank], a ;swap in actor bank
 		ld [$2000], a
-		rst $00 ;call_hl
+		rst $00 ;call the actor's function
 		
-		pop bc
+		pop bc ;get pointer to the actor back in case it discarded it
 		ld hl, ACTORSIZE - 2
 		add hl, bc
 		ldi a, [hl]
 		ld c, a
 		ldi a, [hl]
-		ld b, a ;bc = next actor
+		ld b, a ;bc = pointer to next actor
 		or c
-	jr nz, MAIN.doNextActor
+	jr nz, MAIN.doNextActor ;the list ends when the pointer is zero
 	
 	ld a, $FF
-	ldh [actors_done], a
-	
+	ldh [actors_done], a ;mark the loop as done
 	call roll_rng
-	.wait:
-	halt
-	nop
-	ldh a, [actors_done]
-	and a
-	jr nz, MAIN.wait
-jr MAIN
 	
-readJoystick:
-	ld a, $10
+	.wait:
+		halt
+		nop
+		ldh a, [actors_done]
+		and a
+		jr nz, MAIN.wait ;wait for vblank to signify start of the next frame
+	jr MAIN
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+	
+readJoystick: ;reads the current buttons being pressed and writes to hram for actors to read
+;calculates which buttons are held from last frame as well as press + release edges
+
+	ld a, $10 ;for some reason 0 means active? so this selects buttons rather than directions
 	ldh [$FF00], a
 	REPT 6
-		ldh a, [$FF00] ;grab lo 4 bits of input
+		ldh a, [$FF00] ;grab lo 4 bits of input (Str-Sel-B-A)
 	ENDR
 	and $0F
 	ld c, a
@@ -353,12 +378,12 @@ readJoystick:
 	ld a, $20
 	ldh [$FF00], a
 	REPT 2
-		ldh a, [$FF00] ;grab hi 4 bits of input
+		ldh a, [$FF00] ;grab hi 4 bits of input (Dwn-Up-Lft-Rgt)
 	ENDR
 	and $0F
 	swap a
 	or c
-	cpl
+	cpl ;also, buttons pressed are read as 0, so invert the logic to make 0 = unpressed, 1 = pressed
 	ld c, a
 
 	ldh a, [raw_input]
@@ -378,10 +403,15 @@ readJoystick:
 	ld a, $30
 	ldh [$FF00], a
 	ret
+	
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 spawnActor: ;de = ptr to new actor struct
+;"spawning" an actor simply means appending it to the actor heap linked list.
+;the next available slot is already recorded in a global pointer, so the place it spawns in is pre-calculated.
+;we will still need to recalculate it though, since a following call to spawnActor will need it.
+
 	push bc
-	
 	;step 1 - find end of linked list
 	ldh a, [first_actor]
 	ld c, a
@@ -435,8 +465,12 @@ spawnActor: ;de = ptr to new actor struct
 	
 	pop bc
 	ret ;"returns" de = ptr to byte following actor struct
-		
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
 removeActor: ;de = actor that will be killed
+;killing an actor is as simple as finding the previous actor and making it point to the actor after ours.
+
 	push bc
 	
 	;step 1 - find which actor points to ours
@@ -481,29 +515,40 @@ removeActor: ;de = actor that will be killed
 	pop bc
 	ret
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
 loadGraphicsTask: ;bc = actor to load task into, de = ptr to task data
-	ld hl, $0004 ;hl = actor.gfx_task
-	add hl, bc
+;loads a graphics task in rom to the actor's local memory so it can be modified.
+
+	ld hl, $0004
+	add hl, bc ;hl = actor.gfx_task
 	REPT 6
 		ld a, [de]
 		inc de
-		ldi [hl], a
+		ldi [hl], a ;copy it
 	ENDR
 	ret
+	
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 submitGraphicsTask: ;bc = submitting actor
+;reads a "graphics task" from an actor's local memory and tries to add it to the global queue.
+;the vblank handler can only handle 60 tiles worth of data per frame though, so some requests get rejected.
+;to signify acceptance, the 10th byte of the actor is incremented.
+
 	ld hl, $0004
 	add hl, bc ;hl = actor.gfx task
 	ldh a, [next_task]
 	ld e, a
 	ldh a, [next_task + 1]
 	ld d, a ;de = next_task
-	di
+	
+	di ;graphics-related buffers are timing-sensitivity
 	REPT 6
 		ldi a, [hl]
 		ld [de], a
 		inc de
-	ENDR ;do the copy
+	ENDR ;copy task into the queue, at the end of the loop de points to the next free slot
 	
 	inc a
 	ld l, a
@@ -516,32 +561,40 @@ submitGraphicsTask: ;bc = submitting actor
 	ld a, e
 	ldh [next_task], a
 	ld a, d
-	ldh [next_task + 1], a ;confirm the task's entry (on failure, calling again would overwrite this one)
+	ldh [next_task + 1], a ;confirm the task's entry by updating next_task pointer (on failure, the vblank handler won't loop enough times to read it)
 	
 	ld hl, vblank_jump + 1
-	ld a, $E8
-	add [hl]
+	ld a, [hl]
+	sub $18
 	ldi [hl], a
-	ld a, $FF
-	adc [hl]
-	ldi [hl], a ;vblank task handler is $18 (-$FFE8) bytes long
+	ld a, [hl]
+	sbc $00
+	ldi [hl], a ;vblank task handler is $18 bytes long, so we cause it to loop an extra time by decrementing it by that amt
 	
 	ld hl, $000A
 	add hl, bc
-	inc [hl] ;indicate success
+	inc [hl] ;indicate success to the actor
 	.tooMany:
 	reti
 	
 GFXTASK: MACRO
-	dw ((BANK(\1) & $07) | (\1)) ;source address + ram bank (lower bits are a dont care for rom copies)
+	dw ((BANK(\1) & $07) | (\1)) ;source address + ram bank (lower bits are a don't care for rom copies)
 	db BANK(\1)                  ;source's rom bank (don't care for ram copies)
 	dw (\2 + \3) | BANK(\2)      ;destination region + address in vram
 	db ((\1.end - \1) >> 4) - 1  ;calculate size based on ".end" tag
 	db $FF                       ;padding
 	db $FF                       ;padding
 ENDM
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 	
 roll_rng:
+;we use the xorshift algorithm here: seed ^= seed << A / seed ^= seed >> B / seed ^= seed << C for some triplet A,B,C
+;for 16 bit numbers, there are several good triplets for randomness.
+;we can only shift 1 bit at a time with cpu instructions, but we can also shift 8 bits at a time by loading intermediate results from l to h or vice versa.
+;for these reasons, we will choose 7,9,8. we swap registers to shift by 8 and then shift once more using rra.
+;this loop hits every number from 1-65535, but 0 ^ 0 ^ 0 ^ 0 is still 0 so we need to make sure at init that the rng seed is anything else
+
 	ld hl, rng_seed
 	ldi a, [hl]
 	ld l, [hl]
@@ -566,14 +619,20 @@ roll_rng:
 	ldh [rng_seed+1], a
 	ret
 
-get_rng8:
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+get_rng8: ;returns a = random number 0-255.
 	push hl
 	call roll_rng
 	ld a, h
 	pop hl
 	ret
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 	
 playSample:
+;runs on a timer interrupt to reload the wave of ch3. it does so at 8kHz, so it sounds like a continuous sound.
+
 	push af
 	push hl
 	ldh a, [$FF70]
@@ -629,7 +688,11 @@ ENDR
 	pop af
 	reti
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
 bcopy_banked: ;b = bank, c = size >> 4 (number of tiles), de = src, hl = dest
+;copies c tiles from de to hl, using rom bank b.
+
 	ldh a, [rom_bank]
 	push af
 	ld a, b
@@ -653,47 +716,59 @@ bcopy_banked: ;b = bank, c = size >> 4 (number of tiles), de = src, hl = dest
 	ld [$2000], a
 	ret
 
-saveGame: ;enable sram, copy over, disable sram
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+saveGame: ;enables sram, copies global variables to the save file, then disables sram again
 	swapInRam save_file
 	ld a, $0A
-	ld [$1000], a
+	ld [$1000], a ;unlock sram
 	ld hl, save_string_S
 	ld de, save_file
 	ld bc, save_file.end - save_file
 	call bcopy
 	xor a
-	ld [$1000], a
+	ld [$1000], a ;lock
 	restoreBank "ram"
 	ret
+	
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-loadGame: ;enable sram, copy over, disabel sram
+loadGame: ;enables sram, copies from save file to global variables, then disables sram again
 	swapInRam save_file
 	ld a, $0A
-	ld [$1000], a
+	ld [$1000], a ;unlock sram
 	ld hl, save_file
 	ld de, save_string_S
 	ld bc, save_file.end - save_file
 	call bcopy
 	xor a
-	ld [$1000], a
+	ld [$1000], a ;lock
 	restoreBank "ram"
 	ret
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 	
-clearSprites: ;e = number of sprites to clear, preserves tile IDs
+clearSprites: ;e = number of sprites to clear
+;moves e sprites in oam to y position 0, which is off the top of the screen. preserves tile IDs.
+
 	swapInRam shadow_oam
 	ld hl, shadow_oam
 	xor a
 	.loop:
-		ldi [hl], a
-		ldi [hl], a
+		ldi [hl], a ;y position
+		ldi [hl], a ;x position
 		inc hl
-		ldi [hl], a
+		ldi [hl], a ;palette
 		dec e
 	jr nz, clearSprites.loop
 	restoreBank "ram"
 	ret
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 	
-loadString: ;de = ptr to string to load, copies chars of [de] into OAM as tile IDs
+loadString: ;de = ptr to string to load
+;reads a string and copies each character as a tile ID into oam.
+
 	push bc
 	ld bc, $0004 ;save bc to use as fast loop counter
 	ld hl, shadow_oam + 2 ;tile ID
@@ -707,13 +782,15 @@ loadString: ;de = ptr to string to load, copies chars of [de] into OAM as tile I
 			jr z, loadString.break ;loop while we dont have a terminator character
 		inc de
 		ld [hl], a
-		add hl, bc
+		add hl, bc ;point to the next oam entry
 	jr loadString.loop
 	
 	.break:
 	restoreBank "ram"
 	pop bc
 	ret
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 	
 dummy_actor:
 	ld e, c
@@ -725,8 +802,12 @@ init_data:
 	jp VBLANK.tasks_end - $0018
 	.vblank_end
 
-.oam_data:
-	;ld a, $DE
+.oam_data: ;a = pointer to shadow oam >> 8
+;small routine to copy sprites from shadow_oam to real oam.
+;the first instruction triggers the dma, which locks the cpu out of the cartridge bus. this means we only have access to hram.
+;this routine should be copied into hram at init and run during a blanking period.
+;the dma takes 160 cycles to execute, so we need to wait that long before exiting. conveniently, dec + jr nz takes 4 cycles, so we just loop 40 times.
+
 	ld [$FF46], a
 	ld a, $28
 		.oamStall:
