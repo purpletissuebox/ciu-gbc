@@ -1,69 +1,77 @@
 SECTION "MENU MAP", ROMX
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;
+;edits the map to display new tiles just offscreen.
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+VARIABLE = $0003
+FIRSTENTRY = $0004
 
 menuMap:
 .init:
+;sets up some local variables to prepare for the copy later.
+;need to calculate the starting tile ID and how many tiles to advance after the chunk is copied.
+;we read from global memory to get a live update on which chunks are about to be overwritten.
 	updateActorMain menuMap.main
 	swapInRam menu_bkg_index
 	
-	ld hl, $0003
+	ld hl, VARIABLE
 	add hl, bc
-	ldi a, [hl]
-	and $80
+	ldi a, [hl]	
+	and $80 ;check if we are scrolling up or down
+	
 	ld de, menuMap.chunk_differences_up
 	jr z, menuMap.copy
-		ld de, menuMap.chunk_differences_down
-		
+		ld de, menuMap.chunk_differences_down ;and grab the appropriate table. these are the distances between chunks.
+	
 	.copy:
-		inc hl
-		ld a, [de]
+		inc hl ;skip the first byte of each entry and fill it in later
+		ld a, [de] ;check for terminator
 		inc de
 			cp $FF
 			jr z, menuMap.break
 		ldi [hl], a
 		ld a, [de]
 		inc de
-		ldi [hl], a
+		ldi [hl], a ;copy the distance in the latter 2 bytes of each entry
 	jr menuMap.copy
-	
 	.break:
-	ld hl, $0004
+	
+	;there are 10 regions total. the first two are horizontal bands and have to be handled seperately.
+	ld hl, FIRSTENTRY
 	add hl, bc
-	ld a, [menu_bkg_index]
+	ld a, [menu_bkg_index] ;get which step the bands are on. assume band #2 is on the same step as #1
 	ld e, a
 	add a
 	add e
 	add a
 	add a
-	add e
-	add $80
+	add e ;the horizontal bands' steps take up 13 tiles of vram.
+	add $80 ;and the first tile of step 0 is 80. now a contains the first tile of whichever step we are actually on
 	ldi [hl], a
 	
+	;the remaining regions are vertical stripes which are all the same size. we can handle them in a loop.
 	inc hl
 	inc hl
 	ld c, l
-	ld b, h
-	
-	ld de, menu_bkg_index + $0002
-	ld hl, menuMap.chunk_offsets
+	ld b, h ;bc points to the current entry
+	ld de, menu_bkg_index + $0002 ;de points to the current step
+	ld hl, menuMap.chunk_offsets ;hl points to the first tile in the step
 	
 	.loop:
-		ld a, [de]
+		ld a, [de] ;get step number
 		inc de
 		add a
 		add a
-		add a
-		add [hl]
+		add a ;vertical stripes use 8 tiles per step
+		add [hl] ;add the starting tile ID, now a = first tile of this step
 		inc hl
 		
-		ld [bc], a
+		ld [bc], a ;save the tile id to the current entry, then go to the next one
 		inc bc
 		inc bc
 		inc bc
-		add $04
+		add $04 ;the next entry comes 4 tiles later, because 2 regions share the same step.
 		ld [bc], a
 		inc bc
 		inc bc
@@ -82,28 +90,29 @@ menuMap:
 	push bc
 	swapInRam shadow_map
 	
-	ld hl, $0003
+	ld hl, VARIABLE
 	add hl, bc
-	ldi a, [hl]
+	ldi a, [hl] ;get scroll fraction
 	ld c, l
-	ld b, h
+	ld b, h ;bc points to current entry
 	
 	and $80
 	ld de, $9048
 	jr nz, menuMap.down
-		ld de, $E0F0
-		
+		ld de, $E0F0 ;d/e = number of pixels blow/right of the screen's top-left corner
 	.down:
+	
+	;one row on the attr map is worth 32 tiles and tiles are worth 8 pixels, so calculate dest = 32*(ypos/8) + (xpos/8) = ypos*4 + xpos/8
 	ld h, $00
-	ldh a, [$FF42]
-	add $03
+	ldh a, [$FF42] ;get y scroll
+	add $03 ;to get us to the center of the tile (helps with timing problems where screen has already scrolled a few px)
 	add d
-	and $F8
+	and $F8 ;add y offset from above section and round to the nearest tile
 	add a
 	rl h
 	add a
 	rl h
-	ld l, a
+	ld l, a ;hl = ypos*4
 	
 	ldh a, [$FF43]
 	add $03
@@ -111,49 +120,51 @@ menuMap:
 	and $F8
 	rrca
 	rrca
-	rrca
-	or l
+	rrca ;calculate xpos/8
+	or l ;we shifted y left by 2 and x right by 3 so we have covered the entire *32 difference. thus these bits will never overlap and we can just OR them in instead of adding
 	ld l, a
 	
 	ld de, shadow_map
-	add hl, de
+	add hl, de ;hl points to destination tile. top left of first band.
 	
-	ld a, [bc]
+	ld a, [bc] ;get tile ID
 	inc bc
-	ld e, $0D
+	ld e, $0D ;loop counter
 	
+	;the bands use the same tile IDs, just in different banks.
 	.bands:
-		set 5, l
-		ld [hl], a
-		res 5, l
-		ldi [hl], a
-		inc a
+		set 5, l ;move to lower band
+		ld [hl], a ;write
+		res 5, l ;upper band
+		ldi [hl], a ;write
+		inc a ;next tile
 		dec e
 	jr nz, menuMap.bands
 	
+	;now copy in the stripes. for each entry in the actor's ram, we need to get the tile id, write it to 4 tiles moving downward each time, and then apply the travel distance to reach the next stripe.
+	;bc points to the current entry (starts at distance), hl points to vram, de is a working register
 	xor a
-	
 	.bigLoop:
-		ldh [scratch_byte], a
+		ldh [scratch_byte], a ;loop counter
 		ld a, [bc]
 		inc bc
 		ld e, a
-		ld a, [bc]
+		ld a, [bc] ;read travel distance
 		inc bc
-		ld d, a
-		add hl, de
+		ld d, a 
+		add hl, de ;travel to next stripe
 		res 5, l
-		res 2, h
+		res 2, h ;worst case scenario, we overflow in both x and y directions. luckily, stripes are aligned on a 2x2 grid, so round down on both bits to fix the overflow.
 		
-		ld de, $0020
-		ld a, [bc]
+		ld de, $0020 ;de = distance to tile directly underneath current one
+		ld a, [bc] ;get tile ID
 		inc bc
 		
 		REPT 4
-			ld [hl], a
+			ld [hl], a ;save tile ID
 			inc a
-			add hl, de
-			res 2, h
+			add hl, de ;go to below tile
+			res 2, h ;wrap in y direction
 		ENDR
 		
 		ldh a, [scratch_byte]
@@ -166,7 +177,7 @@ menuMap:
 	
 	ld hl, $000A
 	add hl, bc
-	ld [hl], $00
+	ld [hl], $00 ;shadow map is updated now, so throw this away.
 	ld de, menuMap.task
 	call loadGraphicsTask
 	updateActorMain menuMap.submit
@@ -185,7 +196,9 @@ menuMap:
 		call removeActor
 	.tryAgain:
 	ret
-	
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
 .chunk_differences_up:
 	dw $0053, $030D, $0093, $028F, $0111, $0211, $018F, $0193
 	db $FF
