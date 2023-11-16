@@ -31,6 +31,8 @@ loadTitleTiles:
 		ld d, b
 		call removeActor
 		ret
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 	
 .gfx_tasks:
 	GFXTASK titleTiles1, bkg_tiles0, $0000
@@ -41,6 +43,8 @@ loadTitleTiles:
 	GFXTASK titleMap, bkg_map, $0000
 	GFXTASK titleAttr, bkg_attr, $0000
 	.end
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 SECTION "TITLE SCREEN TILES", ROMX
 align 4

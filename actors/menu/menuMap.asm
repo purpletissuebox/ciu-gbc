@@ -1,5 +1,9 @@
 SECTION "MENU MAP", ROMX
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
 menuMap:
 .init:
 	updateActorMain menuMap.main
@@ -71,6 +75,8 @@ menuMap:
 	
 	restoreBank "ram"
 	ret
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 	
 .main:
 	push bc
@@ -164,6 +170,8 @@ menuMap:
 	ld de, menuMap.task
 	call loadGraphicsTask
 	updateActorMain menuMap.submit
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 	
 .submit:
 	call submitGraphicsTask

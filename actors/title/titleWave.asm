@@ -22,6 +22,8 @@ titleSineWave:
 	updateActorMain titleSineWave.main
 	ret
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+	
 .main:
 ;for each letter, read and imcrement its timer, looping the last 40 frames of the animation.
 ;use the timer to index into a sine table and use that value to set the corresponding entry's y-position in oam.
@@ -61,6 +63,8 @@ titleSineWave:
 	
 	restoreBank "ram"
 	ret
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 	
 .cleanup:
 ;this function is (currently) invoked only when an external force changes this actor's main!
@@ -82,8 +86,9 @@ titleSineWave:
 	
 	restoreBank "ram"
 	ret
-	
-	
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;	
+
 .table:
 angle = 0.0
 height = 0.0

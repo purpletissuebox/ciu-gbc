@@ -7,12 +7,12 @@ SECTION "FADE MUSIC", ROMX
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 VARIABLE = $0003
-FADESPEED = $0004 ;5
+FADESPEED = $0004
 CURRVOL = $0007
 TIMER = $000E
 FADESTART = $000D
 NEXTACTOR = $000C
-MUSICPLAYER = $0008 ;9, A, B
+MUSICPLAYER = $0008
 
 fadeMusic:
 .init:
@@ -62,6 +62,8 @@ fadeMusic:
 	add hl, bc
 	ldd [hl], a
 	ret
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 	
 .wait:
 	ld hl, TIMER
@@ -79,6 +81,8 @@ fadeMusic:
 	ld e, l
 	ld d, h
 	jp spawnActor ;variable for the music player was already written during init
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 	
 .main:
 	ld hl, FADESPEED
@@ -117,6 +121,8 @@ fadeMusic:
 		ld e, c
 		ld d, b
 		jp removeActor
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 FADEMUSICENTRY: MACRO
 IF \3 == "up"

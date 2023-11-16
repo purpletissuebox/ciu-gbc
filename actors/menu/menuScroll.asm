@@ -24,7 +24,9 @@ menuScroller:
 	ldh a, [$FF43]
 	ldi [hl], a ;write original scroll values to actor ram
 	updateActorMain menuScroller.main
-	
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
 .main:
 	ld hl, SCROLLINDEX
 	add hl, bc
@@ -59,7 +61,9 @@ menuScroller:
 	ld [bc], a ;same but for x direction
 	restoreBank "ram"
 	ret
-	
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
 .scroll_offsets:
 	dw $7F7F, $0000, $FFFF, $FFFE, $FEFD, $FEFB, $FDFA, $FDF9, $FCF8, $FBF7, $FBF6, $FAF5, $FAF3, $F9F2, $F9F1, $F8F0 ;up
 	dw $7F7F, $0000, $0101, $0102, $0203, $0205, $0306, $0307, $0408, $0509, $050A, $060B, $060D, $070E, $070F, $0810 ;down

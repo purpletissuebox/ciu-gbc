@@ -29,6 +29,8 @@ STATUSPITCH = $0002
 ;loadNote and friends:
 INCLUDE "../actors/general/musicLoadNote.asm"
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
 updateInstruments:
 ;main driver for all of the instrument code
 	ldh a, [rom_bank]
@@ -368,6 +370,8 @@ note2SoundReg: ;c = io port corresponding to the current channel, hl = ptr to cu
 	ldh [c], a
 	inc c
 	ret
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 	
 frequency_table:
 	INCBIN "../assets/code/freqTable.bin"

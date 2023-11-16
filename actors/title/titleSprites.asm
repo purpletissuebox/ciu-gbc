@@ -30,5 +30,7 @@ titleSpriteLoader:
 	call removeActor
 	ret
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
 .message:
 	db "Press Start\t"

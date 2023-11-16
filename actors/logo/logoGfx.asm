@@ -43,6 +43,8 @@ loadLogoGraphics:
 	GFXTASK tissue_attr, bkg_attr, $0000
 	.end
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
 SECTION "LOGO TILES", ROMX
 align 4
 tissue_tiles1:

@@ -73,6 +73,8 @@ initSong: ;initializes music variables accoring to a song struct (see assets/mus
 	
 	restoreBank "ram"
 	ret
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 	
 .waveforms:
 	db $00,$11,$22,$33,$44,$55,$66,$77,$88,$99,$AA,$BB,$CC,$DD,$EE,$FF ;0 - sawtooth
@@ -177,6 +179,8 @@ killSong:
 	xor a
 	rst $08
 	ret
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 INCLUDE "../assets/music/songList.asm"
 

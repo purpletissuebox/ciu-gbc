@@ -87,6 +87,8 @@ fetchAttributes:
 	call loadGraphicsTask
 	updateActorMain fetchAttributes.submit ;just in case other actors clog up the queue, attempt to resubmit until our new map goes through
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
 .submit:
 	ld hl, NUMTASKS
 	add hl, bc

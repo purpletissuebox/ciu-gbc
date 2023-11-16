@@ -36,6 +36,8 @@ titleActorManager: ;spawn one actor every 56 frames
 	.notDone:
 	ret
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
 .done:
 	ld e, c
 	ld d, b

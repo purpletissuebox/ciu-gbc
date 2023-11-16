@@ -66,6 +66,8 @@ menuManager:
 	call removeActor
 	ret
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
 .actorTable:
 	NEWACTOR menuTilesInit,$00
 	NEWACTOR dummy_actor, $01
