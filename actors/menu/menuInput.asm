@@ -1,7 +1,8 @@
 SECTION "MENU INPUT READER", ROMX
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;
+;reads user input every frame.
+;when up or down is pressed, spawn off several child actors to do the graphics routines for the scrolling.
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 CURRENTSONG = $0003
