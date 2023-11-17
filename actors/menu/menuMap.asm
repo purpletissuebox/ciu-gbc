@@ -1,7 +1,8 @@
 SECTION "MENU MAP", ROMX
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;edits the map to display new tiles just offscreen.
+;edits the tilemap to display new tiles just offscreen.
+;reads from global variables to determine where the new tiles will load in, then reads scroll registers to find where to write their IDs to.
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 VARIABLE = $0003
