@@ -189,7 +189,7 @@ menuTilesInit:
 			
 		.noWrap:
 		dec b
-	jr nz, menuTilesInit.evenRow ;loop over each step
+	jr nz, menuTilesInit.attrStart ;loop over each step
 	
 	restoreBank "ram"
 	pop bc
