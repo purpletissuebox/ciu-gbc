@@ -154,6 +154,8 @@ menuInput:
 	ld bc, menu_bkg_index
 	ld hl, menuInput.moduli ;set up pointers for post processing
 	jp menuInput.preProcess ;the actual algorithm is exactly the same as preprocessing, so jump back to that function to reuse it
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 	
 .moduli:
 	db $0A, $0A, $09, $07, $05, $03
