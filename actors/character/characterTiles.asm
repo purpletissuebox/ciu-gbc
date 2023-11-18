@@ -1,14 +1,18 @@
 SECTION "CHARACTER TILES", ROMX
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;loads graphics for the character select scene.
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
 NUMTASKS = $000A
 
 characterTiles:
 	ld hl, NUMTASKS
 	add hl, bc
 	ld de, characterTiles.gfx_tasks
-	ld a, [hl]
+	ld a, [hl] ;use number of successfully completed tasks as an index into the task array
 	cp ((characterTiles.end - characterTiles.gfx_tasks) >> 3)
-	jr z, characterTiles.goNext
+		jr z, characterTiles.done ;if we completed them all, terminate
 	add a
 	add a
 	add a
@@ -16,20 +20,20 @@ characterTiles:
 	ld e, a
 	ld a, d
 	adc $00
-	ld d, a
+	ld d, a ;de points to the next task to request
 	call loadGraphicsTask
 	jp submitGraphicsTask
 	
-	.goNext:
+	.done:
 	ld e, c
 	ld d, b
 	call removeActor
 	
 	xor a
 	ld de, characterTiles.character_text
-	call loadString
+	jp loadString ;load tile IDs into OAM. the sprite actor will handle moving them around.
 	
-	ret
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 	
 .gfx_tasks:
 	GFXTASK character_tiles1, bkg_tiles0, $0800
