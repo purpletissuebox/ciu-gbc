@@ -341,7 +341,7 @@ ENDM
 	NEWACTOR titleActorManager,$00
 	NEWACTOR initSong,$00 ;title screen
 	NEWACTOR menuInput.init,$00
-	NEWACTOR characterScroller.stall,$10
+	NEWACTOR characterEntry.stall,$10
 	NEWACTOR initSong,$01 ;replace later
 
 logo_colors:
