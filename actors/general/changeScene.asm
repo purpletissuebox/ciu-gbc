@@ -12,4 +12,4 @@ changeSceneActor:
 	
 	ld e, c
 	ld d, b
-	call removeActor
+	jp removeActor
