@@ -338,7 +338,7 @@ ENDM
 	db $01
 	db $FF
 	NEWACTOR setColors.init,$01
-	NEWACTOR titleManager,$00
+	NEWACTOR changeSceneActor,TITLE
 	NEWACTOR initSong,$00 ;title screen
 	NEWACTOR menuInput.init,$00
 	NEWACTOR characterEntry.stall,$10

@@ -79,13 +79,13 @@ ret
 	ld c, $10
 	rst $18
 	
-	ld de, titleHunter.main_menu
+	ld a, MENU
 	jr z, titleHunter.saveExists
-		;ld de, titleHunter.character_select
+		ld a, CHARACTER
 	.saveExists:
 	
+	call changeScene
 	restoreBank "ram"
-	call spawnActor
 	
 	ret
 
