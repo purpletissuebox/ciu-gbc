@@ -10,8 +10,6 @@ QUEUEADJUSTPRE = $001C
 TIMER = $001C
 QUEUEADJUSTPOST = $001D
 
-MENU = $57
-
 menuInput:
 .init:
 	swapInRam save_file
