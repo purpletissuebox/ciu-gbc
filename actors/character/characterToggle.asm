@@ -101,7 +101,8 @@ charToggle:
 	restoreBank "ram"
 	ld e, c
 	ld d, b
-	jp removeActor
+	call removeActor
+	jp saveGame
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
