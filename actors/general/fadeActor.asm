@@ -35,57 +35,59 @@ setColors:
 	ld c, FADESIZE
 	rst $10 ;copy to actor's ram, next frame start counting towards start time
 	ret
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+.instant:
+	add a
+	add a
+	ld de, setColors.color_table
+	add e
+	ld e, a
+	ld a, d
+	adc $00
+	ld d, a ;de = color_table[i]
 	
-	.instant:
-		add a
-		add a
-		ld de, setColors.color_table
-		add e
-		ld e, a
-		ld a, d
-		adc $00
-		ld d, a ;de = color_table[i]
-		
-		ld a, c
-		ldh [scratch_byte], a
-		ld c, FADESIZE
-		rst $10 ;backup ptr to self and copy into actor ram
-		ldh a, [scratch_byte]
-		ld c, a ;restore
-		
-		ld hl, COLORCOUNT
-		add hl, bc
-		ldi a, [hl] ;get number of colors
-		add a
-		ld c, a
-		
-		ldi a, [hl]
-		ld e, a
-		ld d, [hl] ;get ptr to colors
-		
-		swapInRam shadow_palettes
-		ld hl, shadow_palettes
-		rst $10
-		restoreBank "ram" ;copy new colors in directly
-		
-		ldh a, [scratch_byte]
-		ld c, a
-		ld hl, NEXTACTOR		
-		add hl, bc
-		ld a, [hl] ;restore ptr to self and get next actor
-		
-		add a
-		add a
-		ld de, setColors.actor_table
-		add e
-		ld e, a
-		ld a, d
-		adc $00
-		ld d, a ;de = actor_table[i]
-		call spawnActor
-		ld e, c
-		ld d, b
-		jp removeActor
+	ld a, c
+	ldh [scratch_byte], a
+	ld c, FADESIZE
+	rst $10 ;backup ptr to self and copy into actor ram
+	ldh a, [scratch_byte]
+	ld c, a ;restore
+	
+	ld hl, COLORCOUNT
+	add hl, bc
+	ldi a, [hl] ;get number of colors
+	add a
+	ld c, a
+	
+	ldi a, [hl]
+	ld e, a
+	ld d, [hl] ;get ptr to colors
+	
+	swapInRam shadow_palettes
+	ld hl, shadow_palettes
+	rst $10
+	restoreBank "ram" ;copy new colors in directly
+	
+	ldh a, [scratch_byte]
+	ld c, a
+	ld hl, NEXTACTOR		
+	add hl, bc
+	ld a, [hl] ;restore ptr to self and get next actor
+	
+	add a
+	add a
+	ld de, setColors.actor_table
+	add e
+	ld e, a
+	ld a, d
+	adc $00
+	ld d, a ;de = actor_table[i]
+	call spawnActor
+	ld e, c
+	ld d, b
+	jp removeActor
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 	
@@ -98,34 +100,33 @@ setColors:
 	cp [hl] ;check if we should start this frame
 		ret nz
 	
-	.start:
-		swapInRam fade_timer
-		updateActorMain setColors.fade
-		ld hl, FADESPEED
-		add hl, bc
-		xor a
-		bit 7, [hl] ;check sign of fade speed
+	swapInRam fade_timer
+	updateActorMain setColors.fade
+	ld hl, FADESPEED
+	add hl, bc
+	xor a
+	bit 7, [hl] ;check sign of fade speed
+	
+	jr z, setColors.in
+		ld a, $20 ;if fading in, start at 0, else start at 20
+	.in:
+	
+	ld hl, fade_timer+1
+	ldd [hl], a
+	ld [hl], $00
 		
-		jr z, setColors.in
-			ld a, $20 ;if fading in, start at 0, else start at 20
-		.in:
-		
-		ld hl, fade_timer+1
-		ldd [hl], a
-		ld [hl], $00
-			
-		ld hl, COLORCOUNT
-		add hl, bc
-		ldi a, [hl]
-		add a
-		ld c, a ;get number of colors
-		
-		ldi a, [hl]
-		ld e, a
-		ld d, [hl]
-		ld hl, palette_backup
-		rst $10 ;get ptr to colors and copy them to a buffer
-		restoreBank "ram"
+	ld hl, COLORCOUNT
+	add hl, bc
+	ldi a, [hl]
+	add a
+	ld c, a ;get number of colors
+	
+	ldi a, [hl]
+	ld e, a
+	ld d, [hl]
+	ld hl, palette_backup
+	rst $10 ;get ptr to colors and copy them to a buffer
+	restoreBank "ram"
 	ret
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
