@@ -8,22 +8,7 @@ SECTION "TITLE_HUNTER", ROMX
 TIMER = $000F
 SINEACTOR = $0008
 
-titleHunter:
-.init:
-	ld hl, SINEACTOR
-	add hl, bc
-	ldh a, [next_actor]
-	ldi [hl], a
-	ldh a, [next_actor+1]
-	ldi [hl], a ;before spawning the sine wave, record where it will load in
-	ld de, titleHunter.sine_wave
-	call spawnActor
-	
-	updateActorMain titleHunter.main
-ret
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
+titleEnd:
 .main:
 	ld a, [press_input]
 	and $08
@@ -31,12 +16,12 @@ ret
 	
 	xor a
 	ldh [music_on], a ;disable music
-	updateActorMain titleHunter.wait
+	updateActorMain titleEnd.wait
 	
 	xor a
 	ld c, a ;c = actor table index
 	.actorLoop:
-		ld de, titleHunter.actor_table
+		ld de, titleEnd.actor_table
 		add a
 		add a
 		add e
@@ -47,8 +32,8 @@ ret
 		call spawnActor
 		inc c ;i++
 		ld a, c
-		cp ((titleHunter.end - titleHunter.actor_table) >> 2)
-	jr nz, titleHunter.actorLoop
+		cp ((titleEnd.end - titleEnd.actor_table) >> 2)
+	jr nz, titleEnd.actorLoop
 	ret
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -59,28 +44,18 @@ ret
 	inc [hl]
 	ret nz ;wait for fadeout to finish
 	
-	push bc
-	ld hl, SINEACTOR
-	add hl, bc
-	ldi a, [hl]
-	ld d, [hl]
-	ld e, a
-	call removeActor
-	
-	ld e, $0B
-	call clearSprites ;remove press start text
-	
-	pop de ;de = self
+	ld e, c
+	ld d, b
 	call removeActor
 	
 	swapInRam save_string
 	ld de, save_string
-	ld hl, titleHunter.save_string
+	ld hl, titleEnd.save_string
 	ld c, $10
 	rst $18
 	
 	ld a, MENU
-	jr z, titleHunter.saveExists
+	jr z, titleEnd.saveExists
 		ld a, CHARACTER
 	.saveExists:
 	

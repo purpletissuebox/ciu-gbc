@@ -27,6 +27,10 @@ titleSineWave:
 .main:
 ;for each letter, read and imcrement its timer, looping the last 40 frames of the animation.
 ;use the timer to index into a sine table and use that value to set the corresponding entry's y-position in oam.
+	ldh a, [scene]
+	cp TITLE
+	jr nz, titleSineWave.cleanup
+	
 	swapInRam shadow_oam
 	
 	ld hl, TIMERS
@@ -67,25 +71,13 @@ titleSineWave:
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 	
 .cleanup:
-;this function is (currently) invoked only when an external force changes this actor's main!
-;should probably poll for start button press and use a timer to clean up instead...
-;it zeros out the y-positions in oam.
-	swapInRam shadow_oam
+;removes sprites from oam and despawns.
+	ld e, $0B
+	call clearSprites
 	
 	ld e, c
 	ld d, b
-	ld a, $0B
-	ld bc, $0004
-	ld hl, shadow_oam
-	.clearOAM:
-		ld [hl], b
-		add hl, bc
-		dec a
-	jr nz, titleSineWave.clearOAM
-	call removeActor
-	
-	restoreBank "ram"
-	ret
+	jp removeActor
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;	
 
