@@ -791,6 +791,28 @@ loadString: ;de = ptr to string to load
 	ret
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+changeScene: ;e = scene ID to change to
+;changes global scene variable and spawns appropriate actor
+	
+	swapInRam scene
+	ld a, e
+	ld [scene], a
+	
+	add a
+	add a
+	ld de, manager_list
+	add e
+	ld e, a
+	ld a, d
+	adc $00
+	ld d, a
+	call spawnActor
+	
+	restoreBank "ram"
+	ret
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 	
 dummy_actor:
 	ld e, c
@@ -827,6 +849,13 @@ init_data:
 
 .logo_actor:
 	NEWACTOR logoManager, $00
+	
+manager_list:
+	NEWACTOR logoManager, $00
+	NEWACTOR titleManager, $00
+	NEWACTOR menuManager, $00
+	NEWACTOR characterManager, $00
+	
 	
 SECTION "TEXT TILES", ROMX
 	align 4

@@ -38,7 +38,7 @@ score:
 	ds $03
 current_song:
 	ds $01
-game_mode:
+scene:
 	ds $01
 	
 sort_table:
