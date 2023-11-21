@@ -7,7 +7,7 @@ SECTION "TITLEMANAGER", ROMX
 VARIABLE = $0003
 TIMER = $000F
 
-titleActorManager: ;spawn one actor every 56 frames
+titleManager: ;spawn one actor every 56 frames
 	ld hl, TIMER
 	add hl, bc
 	ld a, [hl]
@@ -22,11 +22,11 @@ titleActorManager: ;spawn one actor every 56 frames
 	add hl, bc
 	ld a, [hl] ;variable = next actor to spawn
 	inc [hl]
-	cp ((titleActorManager.end - titleActorManager.actorTable) >> 2) ;end of table
-	jr z, titleActorManager.done
+	cp ((titleManager.end - titleManager.actorTable) >> 2) ;end of table
+	jr z, titleManager.done
 	add a
 	add a
-	ld de, titleActorManager.actorTable
+	ld de, titleManager.actorTable
 	add e
 	ld e, a
 	ld a, d
