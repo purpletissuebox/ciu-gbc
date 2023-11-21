@@ -8,4 +8,8 @@ changeSceneActor:
 	ld hl, VARIABLE
 	add hl, bc
 	ld a, [hl]
-	jp changeScene
+	call changeScene
+	
+	ld e, c
+	ld d, b
+	call removeActor
