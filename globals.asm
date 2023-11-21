@@ -38,8 +38,6 @@ score:
 	ds $03
 current_song:
 	ds $01
-scene:
-	ds $01
 	
 sort_table:
 	ds $40
@@ -212,8 +210,8 @@ ram_bank:
 	ds $01
 vram_bank:
 	ds $01 ;currently swapped in rom, wram, and vram banks
-music_on:
-	ds $01 ;music player will despawn when zero
+scene:
+	ds $01 ;previously game_mode, used to tell actors which scene is loaded
 num_tiles:
 	ds $01
 num_palettes:
@@ -250,6 +248,8 @@ the_sample_hi:
 	ds $01
 the_sample_bank:
 	ds $01 ;ptr to audio sample used by timer interrupt
+music_on:
+	ds $01 ;music player will despawn when zero
 	
 SECTION "SPRITETILES", VRAM[$8000], BANK[0]
 sprite_tiles0:

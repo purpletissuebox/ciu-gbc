@@ -150,8 +150,8 @@ init: ;puts all hardware registers into a known state, loads minimal text graphi
 		dec b
 	jr nz, init.soundLoop ;disable individual channel sound registers
 	
-	ld de, init_data.logo_actor
-	call spawnActor
+	ld e, $00
+	call changeScene
 	call loadGame ;load save file and first actor in prep for gameplay
 	
 	.waitForVBlank:
@@ -795,9 +795,8 @@ loadString: ;de = ptr to string to load
 changeScene: ;e = scene ID to change to
 ;changes global scene variable and spawns appropriate actor
 	
-	swapInRam scene
 	ld a, e
-	ld [scene], a
+	ldh [scene], a
 	
 	add a
 	add a
@@ -808,8 +807,7 @@ changeScene: ;e = scene ID to change to
 	adc $00
 	ld d, a
 	call spawnActor
-	
-	restoreBank "ram"
+
 	ret
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -846,9 +844,6 @@ init_data:
 	dw ACTORHEAP + ACTORSIZE
 	dw TASKLIST
 	.actor_end
-
-.logo_actor:
-	NEWACTOR logoManager, $00
 	
 manager_list:
 	NEWACTOR logoManager, $00
