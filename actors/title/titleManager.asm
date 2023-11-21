@@ -49,5 +49,6 @@ titleManager: ;spawn one actor every 56 frames
 	NEWACTOR setColors, $82
 	NEWACTOR setColorsOBJ, $80
 	NEWACTOR titleSpriteLoader, $FF
-	NEWACTOR titleHunter.init, $FF
+	NEWACTOR titleSineWave, $FF
+	NEWACTOR titleEnd, $FF
 	.end
