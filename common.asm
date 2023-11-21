@@ -792,10 +792,9 @@ loadString: ;de = ptr to string to load
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-changeScene: ;e = scene ID to change to
+changeScene: ;a = scene ID to change to
 ;changes global scene variable and spawns appropriate actor
 	
-	ld a, e
 	ldh [scene], a
 	
 	add a

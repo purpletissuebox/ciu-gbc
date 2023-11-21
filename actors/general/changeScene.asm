@@ -7,5 +7,5 @@ SECTION "SCENE CHANGER", ROMX
 changeSceneActor:
 	ld hl, VARIABLE
 	add hl, bc
-	ld e, [hl]
+	ld a, [hl]
 	jp changeScene
