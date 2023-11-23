@@ -11,7 +11,7 @@ SECTION "MENUINIT+MENUATTR", ROMX
 ;
 ;                                          A0    B0    C0    D0
 ;                                          A0    B0    C0    D0
-; 	E0 E0 E0 E0 E0 E0 E0 E0 E0 E0 E0 E0 E0 A0 A1 B0 B1 C0 C1 D0 D1 
+;   E0 E0 E0 E0 E0 E0 E0 E0 E0 E0 E0 E0 E0 A0 A1 B0 B1 C0 C1 D0 D1 
 ;   F0 F0 F0 F0 F0 F0 F0 F0 F0 F0 F0 F0 F0 A0 A1 B0 B1 C0 C1 D0 D1
 ;     +-----------------------------------------------------------+
 ;   A0|E1 E1 E1 E1 E1 E1 E1 E1 E1 E1 E1 E1 E1 A1 A2 B1 B2 C1 C2 D1|D2
