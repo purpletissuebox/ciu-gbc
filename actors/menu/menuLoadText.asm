@@ -1,4 +1,11 @@
 SECTION "LOAD TEXT", ROMX
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;loads text strings into oam based on scroll fraction.
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+VARIABLE = $0003
+
 menuLoadText:
 	ldh a, [$FF44]
 	cp $59
@@ -19,30 +26,32 @@ menuLoadText:
 	jp removeActor
 
 .init:
+;because of the fact that songs need to be in scanline order in oam, we cant use a circular queue like for the bkg layer.
+;if we are scrolling UP, we want 1 song above + A, BC, D. scanline interrupts will fire on 18 and 58
+;if we are scrolling DOWN, we want AB, CD, 1 song below. scanline interrupts will fire on 38 and 78
 	swapInRam sort_table
-	ld hl, $0003
+	ld hl, VARIABLE
 	add hl, bc
-	ldi a, [hl]
+	ldi a, [hl] ;get variable = song above the top of the screen OR the song 7 songs below the screen
 	ld e, a
-	and $80
+	and $80 ;check if scrolling up or down. if up, the variable is the song above already. if down, we need to correct for the offset.
 	ld a, e
-	dec a
-	jr nz, menuLoadText.down
-		dec a
-	.down:
-	and $3F
+	jr z, menuLoadText.up
+		sub $0A
+		and $3F
+	.up:
 	
 	ld de, sort_table
 	add e
 	ld e, a
 	ld a, d
 	adc $00
-	ld d, a
+	ld d, a ;de = ptr to internal song ID
 	
 	push bc
 	
 	.loop:
-		ld a, [de]
+		ld a, [de] ;get internal song ID
 		inc de
 		
 		ld bc, menuLoadText.songPtrs
@@ -51,52 +60,53 @@ menuLoadText:
 		ld c, a
 		ld a, b
 		adc $00
-		ld b, a
+		ld b, a ;bc = ptr to ptr to song name
 		
 		ld a, [bc]
 		inc bc
 		ldi [hl], a
 		ld a, [bc]
-		ldi [hl], a
+		ldi [hl], a ;save string's address to local memory
 		
 		ld a, e
-		sub LOW(sort_table.end)
-		jr nz, menuLoadText.wrap
+		sub LOW(sort_table.end) ;if we were at index 3F, wrap back around to 00 (this works because the table is less than 100 bytes)
+		jr nz, menuLoadText.noWrap
 			ld de, sort_table
-		.wrap:
+		.noWrap:
 		
 		ld a, l
 		and $0F
-		sub $0E
-	jr nz, menuLoadText.loop
+		sub $0E ;bad - assumes actor alignment to 16 bytes ???
+	jr nz, menuLoadText.loop ;loop 5 times
 	
 	pop bc
-	swapInRam shadow_oam
-	ld hl, $0003
+	ld hl, VARIABLE
 	add hl, bc
 	ldi a, [hl]
-	and $80
-	ld bc, $F800
+	and $80 ;initialize position of first sprite based on if we scroll up or down
+	ld bc, $F808 ;b = y position, c = x position
 	jr z, menuLoadText.up
-		ld bc, $1810
+		ld bc, $1818
 	.up:
 	
+	swapInRam shadow_oam
 	ldi a, [hl]
 	ld e, a
 	ldi a, [hl]
-	ld d, a
+	ld d, a ;de = ptr to string
 	push hl
-	ld hl, shadow_oam
+	ld hl, shadow_oam ;hl = ptr to oam entry
 	call loadSongName
 	pop hl
-	
 	ld a, b
 	add $18
 	or $08
-	ld b, a
+	ld b, a ;we need to move down either 3 or 4 rows, depending on if the string had a newline in it. so add 3 rows and use OR to round up.
 	rra
-	add $04
-	ld c, a	
+	add $0C
+	ld c, a	;the x position can be anywhere along the row so we can't use the same trick. luckily we can use the fact that they lie along a line with slope 1/2. x = y/2 + 12
+	
+	;repeat for second string
 	ldi a, [hl]
 	ld e, a
 	ldi a, [hl]
@@ -105,8 +115,6 @@ menuLoadText:
 	ld hl, shadow_oam + $50
 	call loadSongName
 	pop hl
-	
-	swapInRam on_deck
 	ld a, b
 	add $18
 	or $08
@@ -114,6 +122,9 @@ menuLoadText:
 	rra
 	add $04
 	ld c, a
+	
+	;third string
+	swapInRam on_deck
 	ldi a, [hl]
 	ld e, a
 	ldi a, [hl]
@@ -122,7 +133,6 @@ menuLoadText:
 	ld hl, on_deck
 	call loadSongName
 	pop hl
-	
 	ld a, b
 	add $18
 	or $08
@@ -130,6 +140,8 @@ menuLoadText:
 	rra
 	add $04
 	ld c, a
+	
+	;fourth string
 	ldi a, [hl]
 	ld e, a
 	ldi a, [hl]
@@ -138,7 +150,6 @@ menuLoadText:
 	ld hl, on_deck + $50
 	call loadSongName
 	pop hl
-	
 	ld a, b
 	add $18
 	or $08
@@ -146,13 +157,13 @@ menuLoadText:
 	rra
 	add $04
 	ld c, a
+	
+	;fifth string
 	ldi a, [hl]
 	ld e, a
 	ld d, [hl]
-	push hl
 	ld hl, up_next
 	call loadSongName
-	pop hl
 	
 	restoreBank "ram"
 	restoreBank "ram"
@@ -163,6 +174,8 @@ menuLoadText:
 	ld e, l
 	ld d, h
 	jp removeActor
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 	
 .songPtrs:
 SONGID = 0
@@ -237,26 +250,17 @@ songNames:
 .3E:	db "song name\nnumber 62\t"
 .3F:	db "song name\nnumber 63\t"
 
-;hl = dest
-;de = src
-;bc = ypos/xpos
-loadSongName:
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+loadSongName: ;de = string to load, hl = oam entry to start at, b = y coordinate, c = x coordinate
 	.copyRow:
-		ld a, [de]
+		ld a, [de] ;get next character
 		cp "\t"
-			ret z
+			ret z ;if terminator, we are done
 		cp "\n"
-			jr z, loadSongName.nextLine
+			jr z, loadSongName.nextLine ;if newline, increase y coord and reset x coord
 		cp " "
-		jr nz, loadSongName.printingChar
-			inc de
-			ld a, c
-			add $08
-			ld c, a
-			jr loadSongName.copyRow
-			
-			
-		.printingChar:		
+			jr z, loadSongName.space ;if space, increment x coordinate		
 		ld a, b
 		ldi [hl], a
 		ld a, c
@@ -269,11 +273,18 @@ loadSongName:
 		inc hl
 	jr loadSongName.copyRow
 	
-	.nextLine:
-	inc de
-	ld a, b
-	add $08
-	ld b, a
-	rra
-	ld c, a
+		.space:
+		inc de
+		ld a, c
+		add $08
+		ld c, a
+	jr loadSongName.copyRow
+	
+		.nextLine:
+		inc de
+		ld a, b
+		add $08
+		ld b, a
+		rra
+		ld c, a
 	jr loadSongName.copyRow
