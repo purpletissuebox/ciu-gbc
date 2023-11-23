@@ -85,9 +85,9 @@ menuLoadText:
 	ldi a, [hl]
 	and $80 ;initialize position of first sprite based on if we scroll up or down
 	ld bc, $F808 ;b = y position, c = x position
-	jr z, menuLoadText.up
+	jr z, menuLoadText.up2
 		ld bc, $1818
-	.up:
+	.up2:
 	
 	swapInRam shadow_oam
 	ldi a, [hl]
