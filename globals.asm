@@ -129,9 +129,13 @@ SECTION "SCRATCHGFX", WRAMX[$D000], BANK[5]
 on_deck:
 	ds $A0
 	.end
+.padding:
+	ds $60
 up_next:
 	ds $A0
 	.end
+.padding:
+	ds $60
 
 SECTION "GFX_DATA_6", WRAMX[$D000], BANK[6]
 UNION
