@@ -5,17 +5,19 @@ SECTION "LOAD TEXT", ROMX
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 VARIABLE = $0003
+STARTX = $08
 
 menuLoadText:
 	ldh a, [$FF44]
-	cp $59
+	cp $59 ;at scanline 58, oam contains either songs CD or D+below. in either case, the remaining songs have been rendered already and we can overwrite oam.
 	jr nc, menuLoadText.init
 	
+	;before scanline 58, the state of the sprites are unknown, so we wait.
 	ld hl, ACTORSIZE - 2
 	add hl, bc
 	ldi a, [hl]
 	or [hl]
-	jr z, menuLoadText
+	jr z, menuLoadText ;if we are the last actor, we can just spin on the scanline counter. else let the other actors run.
 	
 	ld e, c
 	ld d, b
@@ -84,9 +86,9 @@ menuLoadText:
 	add hl, bc
 	ldi a, [hl]
 	and $80 ;initialize position of first sprite based on if we scroll up or down
-	ld bc, $F808 ;b = y position, c = x position
+	ld bc, $F800 + STARTX ;b = y position, c = x position
 	jr z, menuLoadText.up2
-		ld bc, $1818
+		ld bc, $1810 + STARTX
 	.up2:
 	
 	swapInRam shadow_oam
@@ -103,7 +105,7 @@ menuLoadText:
 	or $08
 	ld b, a ;we need to move down either 3 or 4 rows, depending on if the string had a newline in it. so add 3 rows and use OR to round up.
 	rra
-	add $0C
+	add $04 + STARTX
 	ld c, a	;the x position can be anywhere along the row so we can't use the same trick. luckily we can use the fact that they lie along a line with slope 1/2. x = y/2 + 12
 	
 	;repeat for second string
@@ -120,7 +122,7 @@ menuLoadText:
 	or $08
 	ld b, a
 	rra
-	add $04
+	add $04 + STARTX
 	ld c, a
 	
 	;third string
@@ -138,7 +140,7 @@ menuLoadText:
 	or $08
 	ld b, a
 	rra
-	add $04
+	add $04 + STARTX
 	ld c, a
 	
 	;fourth string
@@ -155,15 +157,17 @@ menuLoadText:
 	or $08
 	ld b, a
 	rra
-	add $04
+	add $04 + STARTX
 	ld c, a
 	
 	;fifth string
 	ldi a, [hl]
 	ld e, a
 	ld d, [hl]
+	push hl
 	ld hl, up_next
 	call loadSongName
+	pop hl
 	
 	restoreBank "ram"
 	restoreBank "ram"
