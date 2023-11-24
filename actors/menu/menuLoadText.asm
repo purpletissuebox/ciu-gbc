@@ -7,7 +7,7 @@ SECTION "LOAD TEXT", ROMX
 VARIABLE = $0003
 STARTX = $08
 
-menuLoadText:
+menuLoadText:/*
 	ldh a, [$FF44]
 	cp $59 ;at scanline 58, oam contains either songs CD or D+below. in either case, the remaining songs have been rendered already and we can overwrite oam.
 	jr nc, menuLoadText.init
@@ -25,7 +25,7 @@ menuLoadText:
 	
 	ld e, c
 	ld d, b
-	jp removeActor
+	jp removeActor*/
 
 .init:
 ;because of the fact that songs need to be in scanline order in oam, we cant use a circular queue like for the bkg layer.
@@ -82,6 +82,7 @@ menuLoadText:
 	jr nz, menuLoadText.loop ;loop 5 times
 	
 	pop bc
+	push bc
 	ld hl, VARIABLE
 	add hl, bc
 	ldi a, [hl]
@@ -164,20 +165,17 @@ menuLoadText:
 	ldi a, [hl]
 	ld e, a
 	ld d, [hl]
-	push hl
 	ld hl, up_next
 	call loadSongName
-	pop hl
 	
 	restoreBank "ram"
 	restoreBank "ram"
+	pop bc
 	restoreBank "ram"
-		
-	ld bc, $FFF3
-	add hl, bc
-	ld e, l
-	ld d, h
-	jp removeActor
+	
+	ld e, c
+	ld d, b
+	call removeActor
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 	
