@@ -193,7 +193,7 @@ songNames:
 .01:	db "guys it's me\t"
 .02:	db "ur boy purp\ntissue box\t"
 .03:	db "wow i need\n64 of these\t"
-.04:	db "song names\ndont i"
+.04:	db "song names\ndont i\t"
 .05:	db "song name\nnumber 5\t"
 .06:	db "song name\nnumber 6\t"
 .07:	db "song name\nnumber 7\t"
@@ -290,5 +290,6 @@ loadSongName: ;de = string to load, hl = oam entry to start at, b = y coordinate
 		add $08
 		ld b, a
 		rra
+		add STARTX
 		ld c, a
 	jr loadSongName.copyRow
