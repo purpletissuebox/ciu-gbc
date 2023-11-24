@@ -176,6 +176,18 @@ menuLoadText:/*
 	ld e, c
 	ld d, b
 	call removeActor
+	
+	ld l, c
+	ld h, b
+	ld a, LOW(scrollText)
+	ldi [hl], a
+	ld a, HIGH(scrollText)
+	ldi [hl], a
+	ld a, BANK(scrollText)
+	ldi [hl], a
+	ld e, c
+	ld d, b
+	jp spawnActor
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 	
