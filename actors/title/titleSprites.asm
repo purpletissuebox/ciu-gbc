@@ -27,8 +27,7 @@ titleSpriteLoader:
 	
 	restoreBank "ram"
 	pop de ;de = ptr to actor
-	call removeActor
-	ret
+	jp removeActor
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 

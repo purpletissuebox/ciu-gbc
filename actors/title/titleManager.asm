@@ -41,8 +41,7 @@ titleManager: ;spawn one actor every 56 frames
 .done:
 	ld e, c
 	ld d, b
-	call removeActor
-	ret
+	jp removeActor
 
 .actorTable:
 	NEWACTOR loadTitleTiles, $FF

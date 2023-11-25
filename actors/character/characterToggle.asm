@@ -86,8 +86,7 @@ charToggle:
 	add hl, bc
 	ldd a, [hl]
 	ld [hl], a
-	call spawnActor ;spawn scroller for deselected character to go down
-	ret
+	jp spawnActor ;spawn scroller for deselected character to go down
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 

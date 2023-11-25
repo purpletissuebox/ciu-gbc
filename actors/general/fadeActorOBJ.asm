@@ -204,8 +204,7 @@ setColorsOBJ:
 		call spawnActor
 		ld e, c
 		ld d, b
-		call removeActor
-		ret
+		jp removeActor
 	
 .rgb5to8:
 

@@ -805,9 +805,7 @@ changeScene: ;a = scene ID to change to
 	ld a, d
 	adc $00
 	ld d, a
-	call spawnActor
-
-	ret
+	jp spawnActor
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 	

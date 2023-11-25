@@ -29,8 +29,7 @@ loadTitleTiles:
 	.done:
 		ld e, c
 		ld d, b
-		call removeActor
-		ret
+		jp removeActor
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 	

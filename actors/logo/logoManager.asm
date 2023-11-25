@@ -23,10 +23,9 @@ logoManager:
 		cp LOW(logoManager.end - logoManager.actor_table) >> 2
 	jr nz, logoManager.actorLoop
 		
-		ld e, c
-		ld d, b
-		call removeActor
-	ret
+	ld e, c
+	ld d, b
+	jp removeActor
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 	

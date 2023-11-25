@@ -134,8 +134,7 @@ characterEntry:
 	call spawnActor
 	ld e, c
 	ld d, b
-	call removeActor ;done
-	ret
+	jp removeActor ;done
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 

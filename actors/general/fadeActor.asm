@@ -207,8 +207,7 @@ setColors:
 		call spawnActor
 		ld e, c
 		ld d, b
-		call removeActor
-		ret
+		jp removeActor
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 	

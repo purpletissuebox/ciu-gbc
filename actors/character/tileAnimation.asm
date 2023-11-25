@@ -124,8 +124,7 @@ tileAnimation:
 	
 	restoreBank "ram"
 	pop bc
-	call submitGraphicsTask
-	ret
+	jp submitGraphicsTask
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 

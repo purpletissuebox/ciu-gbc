@@ -68,8 +68,7 @@ characterFlicker:
 	
 	ld [hl], a
 	ld de, characterFlicker.revert
-	call spawnActor ;put both color palettes back to yellow and we will begin flicking the correct side next frame
-	ret
+	jp spawnActor ;put both color palettes back to yellow and we will begin flicking the correct side next frame
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 	
