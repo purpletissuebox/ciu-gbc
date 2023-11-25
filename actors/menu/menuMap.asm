@@ -106,9 +106,9 @@ menuMap:
 	;one row on the attr map is worth 32 tiles and tiles are worth 8 pixels, so calculate dest = 32*(ypos/8) + (xpos/8) = ypos*4 + xpos/8
 	ld h, $00
 	ldh a, [$FF42] ;get y scroll
-	add $03 ;to get us to the center of the tile (helps with timing problems where screen has already scrolled a few px)
+	add $08 ;to get us to the center of the double tile (helps with timing problems where screen has already scrolled a few px)
 	add d
-	and $F8 ;add y offset from above section and round to the nearest tile
+	and $F0 ;add y offset from above section and round to the nearest double tile
 	add a
 	rl h
 	add a
@@ -116,7 +116,7 @@ menuMap:
 	ld l, a ;hl = ypos*4
 	
 	ldh a, [$FF43]
-	add $03
+	add $04
 	add e
 	and $F8
 	rrca
