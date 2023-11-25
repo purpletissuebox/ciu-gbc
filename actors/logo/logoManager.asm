@@ -5,22 +5,13 @@ SECTION "LOGO MANAGER", ROMX
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 logoManager:
-	xor a
-	ld [bc], a ;we use the first byte in actor ram as a loop counter
+	ld a, ((logoManager.end - logoManager.actor_table) >> 2) ;a = number of actors to spawn
+	ld de, logoManager.actor_table ;de = ptr to actor
 	.actorLoop: ;for each actor in the table
-		ld de, logoManager.actor_table
-		add a
-		add a
-		add e
-		ld e, a
-		ld a, d
-		adc $00
-		ld d, a ;de = actor_table[i]
-		call spawnActor
-		ld a, [bc]
-		inc a
-		ld [bc], a
-		cp LOW(logoManager.end - logoManager.actor_table) >> 2
+		ldh [scratch_byte], a
+		call spawnActor ;de will automatically increment to next actor inside the function call
+		ldh a, [scratch_byte]
+		dec a
 	jr nz, logoManager.actorLoop
 		
 	ld e, c
