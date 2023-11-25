@@ -131,8 +131,10 @@ SECTION "SCRATCHGFX", WRAMX[$D000], BANK[5]
 on_deck:
 	ds $A0
 	.end
+.active_buffer:
+	ds $01
 .padding:
-	ds $60
+	ds $5F
 up_next:
 	ds $A0
 	.end
