@@ -307,6 +307,7 @@ setColorsOBJ:
 	FADEENTRY $01, $7F, "up", text_colors, $00
 	FADEENTRY $80, $30, "down", text_colors, $00
 	FADEENTRY $01, $40, "up", text_colors_char, $00
+	FADEENTRY $01, $40, "up", text_colors_menu, $00
 
 .actor_table:
 	dw dummy_actor
@@ -316,6 +317,10 @@ setColorsOBJ:
 
 text_colors:
 	INCBIN "../assets/gfx/palettes/textColors.bin", $0000, $0008
+	.end
+
+text_colors_menu:
+	INCBIN "../assets/gfx/palettes/textColors.bin", $0000, $0010
 	.end
 	
 text_colors_char:

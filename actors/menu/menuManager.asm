@@ -70,8 +70,8 @@ menuManager:
 
 .actorTable:
 	NEWACTOR menuTilesInit,$00
-	NEWACTOR dummy_actor, $01
+	NEWACTOR setColorsOBJ,$83
 	;NEWACTOR menuScroller,$00
 	;NEWACTOR songDisplay,$00
-	;NEWACTOR setColorsOBJ,$82
+
 	.end
