@@ -543,7 +543,7 @@ submitGraphicsTask: ;bc = submitting actor
 	ldh a, [next_task + 1]
 	ld d, a ;de = next_task
 	
-	di ;graphics-related buffers are timing-sensitivity
+	di ;graphics-related buffers are timing-sensitive
 	REPT 6
 		ldi a, [hl]
 		ld [de], a
@@ -806,6 +806,26 @@ changeScene: ;a = scene ID to change to
 	adc $00
 	ld d, a
 	jp spawnActor
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+retriggerOAM: ;scanline interrupt that loads extra sprites.
+	push af
+	swapInRam on_deck ;save context
+	
+	ldh a, [$FF45]
+	xor $40
+	ldh [$FF45], a ;toggle the scanline to fire on between upper and lower halves of the screen
+		
+	ld a, [on_deck.active_buffer]
+	xor $01
+	ld [on_deck.active_buffer], a ;toggle the two buffers as well
+	
+	call oam_routine
+	
+	restoreBank "ram" ;restore context
+	pop af
+	reti	
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 	

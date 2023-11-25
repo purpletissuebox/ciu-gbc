@@ -161,8 +161,8 @@ int_vblank:
 	jp VBLANK
 	ds 5, $00
 int_lcdc:
-	reti
-	ds 7, $00
+	jp retriggerOAM
+	ds 5, $00
 int_timer:
 	jp playSample
 	ds 5, $00
