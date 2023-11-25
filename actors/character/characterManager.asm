@@ -4,22 +4,14 @@ SECTION "CHARACTER SELECT", ROMX
 ;orchestrates the spawning of child actors in the character select scene.
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-characterManager:	
-	xor a
+characterManager:
+	ld a, ((characterManager.end - characterManager.actor_table) >> 2) ;a = number of actors to spawn
+	ld de, characterManager.actor_table ;de = ptr to actor
 	.actorLoop:
-		ld [bc], a ;overwrite first byte of actor to use as loop counter
-		ld de, characterManager.actor_table
-		add a
-		add a
-		add e
-		ld e, a
-		ld a, d
-		adc $00
-		ld d, a ;de points to the ith actor to spawn
-		call spawnActor ;spawn it
-		ld a, [bc]
-		inc a
-		cp LOW(characterManager.end - characterManager.actor_table) >> 2 ;loop for each actor in the table
+		ldh [scratch_byte], a
+		call spawnActor ;de will automatically increment to next actor inside the function call
+		ldh a, [scratch_byte]
+		dec a
 	jr nz, characterManager.actorLoop
 	
 	ld e, c
