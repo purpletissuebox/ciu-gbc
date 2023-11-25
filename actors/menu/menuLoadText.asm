@@ -161,7 +161,7 @@ menuLoadText:/*
 	add $04 + STARTX
 	ld c, a
 	
-	;fifth string
+	;fifth string. this time adjusting pointers/positions is not necessary.
 	ldi a, [hl]
 	ld e, a
 	ld d, [hl]
@@ -274,44 +274,53 @@ loadSongName: ;de = string to load, hl = oam entry to start at, b = y coordinate
 		cp "\n"
 			jr z, loadSongName.nextLine ;if newline, increase y coord and reset x coord
 		cp " "
-			jr z, loadSongName.space ;if space, increment x coordinate		
+			jr z, loadSongName.space ;if space, increment x coordinate	
+
+		;otherwise, it is a regular printing character
 		ld a, b
-		ldi [hl], a
+		ldi [hl], a ;save y position
 		ld a, c
-		ldi [hl], a
+		ldi [hl], a ;save x position
 		add $08
-		ld c, a
+		ld c, a ;increment x position
 		ld a, [de]
 		inc de
-		ldi [hl], a
+		ldi [hl], a ;save tile ID
 		inc hl
 	jr loadSongName.copyRow
 	
 		.space:
-		inc de
+		inc de ;advance past the space
 		ld a, c
 		add $08
-		ld c, a
+		ld c, a ;and increment x position
 	jr loadSongName.copyRow
 	
 		.nextLine:
-		inc de
+		inc de ;advance past the newline
 		ld a, b
 		add $08
-		ld b, a
+		ld b, a ;go down to the next line
 		rrca
 		add STARTX
-		ld c, a
+		ld c, a ;and reset x position to the leftmost tile
 	jr loadSongName.copyRow
 	
-	.finish:
-	ld de, $0004
+.finish: ;move all remaining sprites for this string offscreen
+	ld de, $0004 ;distance between oam entries
+	ld c, $C4 ;y coordinate for an unused entry
+	
+	ld a, l
+	.mod:
+		sub $50
+	jr nc, loadSongName.mod ;if we are in the upper 20 sprites ($50 - $A0), subtract again
+	
+	sra a
+	sra a ;a now holds the number of remaining sprites * (-1)
+	dec a
 	.loop:
-		ld a, l
-		sub $50
-			ret z
-		sub $50
-			ret z
-		ld [hl], $C4 ;set y coordinate of all unused sprites to off the bottom of the screen. this way the scroll actor cannot place them onscreen.
-		add hl, de
-	jr loadSongName.loop	
+		inc a
+		ret z
+		ld [hl], c ;set y coordinate of all unused sprites to off the bottom of the screen. this way the scroll actor cannot place them onscreen.
+		add hl, de ;go to next sprite
+	jr loadSongName.loop
