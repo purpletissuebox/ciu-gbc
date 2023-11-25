@@ -86,26 +86,23 @@ menuInput:
 		ld a, h
 		adc $00
 		ld h, a
-		ld [hl], e ;write vnew variable to each actor
+		ld [hl], e ;write new variable to each actor
 		dec d
 	jr nz, menuInput.varLoop
 	
-	ld a, ((menuInput.high_priority_actors - menuInput.low_priority_actors) >> 2) + 1;loop through each actor
-	.spawnLoop: ;conveniently, the actors start on a multiple of 4. if we consider the main function + variable to be "actor 0", we just loop from actor N down to actor 1 and terminate.
+	ld a, c
+	add (menuInput.high_priority_actors - menuInput.low_priority_actors) + 4 ;add distance from start of actor to the high priority actor list
+	ld e, a
+	ld a, b
+	adc $00
+	ld d, a ;de = ptr to first actor
+	ld a, ((menuInput.end - menuInput.high_priority_actors) >> 2) ;a = number of actors to spawn
+	.spawnLoopHi:
 		ldh [scratch_byte], a
-		add a
-		add a
-		add c
-		ld e, a
-		ld a, b
-		adc $00
-		ld d, a ;de = actor_list[i]
-		call spawnActor
+		call spawnActor ;de will automatically increment inside the call
 		ldh a, [scratch_byte]
-		inc a
-		cp ((menuInput.end - menuInput.low_priority_actors) >> 2) + 1
-	jr nz, menuInput.spawnLoop
-	
+		dec a
+	jr nz, menuInput.spawnLoopHi
 	updateActorMain menuInput.doLowPrio
 	
 	swapInRam menu_bkg_index
@@ -141,23 +138,24 @@ menuInput:
 	add hl, bc
 	dec [hl]
 	ret nz
-	
 	ld [hl], $0A
-	updateActorMain menuInput.wait
-	ld a, ((menuInput.high_priority_actors - menuInput.low_priority_actors) >> 2) ;loop through each actor
-	.spawnLoop2: ;conveniently, the actors start on a multiple of 4. if we consider the main function + variable to be "actor 0", we just loop from actor N down to actor 1 and terminate.
+	
+	ld a, c
+	add $04 ;add distance from start of actor to the low priority actor list
+	ld e, a
+	ld a, b
+	adc $00
+	ld d, a ;de = ptr to first actor
+	
+	ld a, ((menuInput.high_priority_actors - menuInput.low_priority_actors) >> 2) ;a = number of actors to spawn
+	.spawnLoopLo:
 		ldh [scratch_byte], a
-		add a
-		add a
-		add c
-		ld e, a
-		ld a, b
-		adc $00
-		ld d, a ;de = actor_list[i]
-		call spawnActor
+		call spawnActor ;de will automatically increment inside the call
 		ldh a, [scratch_byte]
 		dec a
-	jr nz, menuInput.spawnLoop2
+	jr nz, menuInput.spawnLoopLo
+	
+	updateActorMain menuInput.wait
 	ret
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

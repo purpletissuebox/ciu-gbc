@@ -19,9 +19,9 @@ menuManager:
 	
 	ld hl, ACTORLIST
 	add hl, bc
-	ld de, menuManager.actorTable
+	ld de, menuManager.actor_table
 	push bc
-	ld c, LOW(menuManager.end - menuManager.actorTable)
+	ld c, LOW(menuManager.end - menuManager.actor_table)
 	rst $10
 	pop bc ;copy actor list into local memory
 
@@ -44,21 +44,16 @@ menuManager:
 		jr menuManager.variableLoop
 	.summon:
 	
-	xor a
+	ld hl, ACTORLIST
+	add hl, bc
+	ld e, l
+	ld d, h ;de = ptr to first actor
+	ld a, ((menuManager.end - menuManager.actor_table) >> 2) ;a = number of actors to spawn
 	.actorLoop:
 		ldh [scratch_byte], a ;a = loop index
-		add a
-		add a
-		ld hl, ACTORLIST
-		add l
-		ld l, a ;hl = offset from start of actor to current entry
-		add hl, bc
-		ld e, l
-		ld d, h ;de = actorTable[i]
 		call spawnActor
 		ldh a, [scratch_byte]
-		inc a
-		cp ((menuManager.end - menuManager.actorTable) >> 2) ;end of table
+		dec a
 	jr nz, menuManager.actorLoop
 
 	ld e, c
@@ -67,7 +62,7 @@ menuManager:
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-.actorTable:
+.actor_table:
 	NEWACTOR menuTilesInit,$00
 	NEWACTOR handleSort,$00
 	NEWACTOR setColorsOBJ,$83
