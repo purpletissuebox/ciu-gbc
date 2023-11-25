@@ -299,7 +299,7 @@ loadSongName: ;de = string to load, hl = oam entry to start at, b = y coordinate
 		ld a, b
 		add $08
 		ld b, a
-		rra
+		rrca
 		add STARTX
 		ld c, a
 	jr loadSongName.copyRow
