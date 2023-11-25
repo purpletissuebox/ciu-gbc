@@ -270,7 +270,7 @@ loadSongName: ;de = string to load, hl = oam entry to start at, b = y coordinate
 	.copyRow:
 		ld a, [de] ;get next character
 		cp "\t"
-			ret z ;if terminator, we are done
+			jr z, loadSongName.finish ;if terminator, we are done
 		cp "\n"
 			jr z, loadSongName.nextLine ;if newline, increase y coord and reset x coord
 		cp " "
@@ -303,3 +303,15 @@ loadSongName: ;de = string to load, hl = oam entry to start at, b = y coordinate
 		add STARTX
 		ld c, a
 	jr loadSongName.copyRow
+	
+	.finish:
+	ld de, $0004
+	.loop:
+		ld a, l
+		sub $50
+			ret z
+		sub $50
+			ret z
+		ld [hl], $C4 ;set y coordinate of all unused sprites to off the bottom of the screen. this way the scroll actor cannot place them onscreen.
+		add hl, de
+	jr loadSongName.loop	
