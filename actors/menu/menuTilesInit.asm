@@ -89,8 +89,8 @@ menuTilesInit:
 	ld a, d ;now calculate the address by multiplying by $400, adjusting top 2 bits to keep us in the $4000-7FFF range.
 	add a
 	add a
-	res 7, a
-	set 6, a
+	and $7F
+	or $40
 	ldi [hl], a ;save high byte of address. the low byte is known to start at 0.
 	ld [hl], $0B ;we have to load 11 steps.
 	

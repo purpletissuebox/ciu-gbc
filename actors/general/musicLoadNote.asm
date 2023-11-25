@@ -127,7 +127,7 @@ getPitch: ;a = midi key
 	
 	ldd a, [hl]
 	ld e, [hl]
-	set 7, a ;return (8000 | wavelength) in ae
+	or $80 ;return (8000 | wavelength) in ae
 	ret
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

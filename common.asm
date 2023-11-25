@@ -669,7 +669,7 @@ ENDR
 	adc [hl]
 	add $80
 	res 7, a
-	set 6, a
+	set 6, a ;wrap while preserving carry
 	ldi [hl], a
 	ld a, $00
 	adc [hl]
