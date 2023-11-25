@@ -173,10 +173,6 @@ menuLoadText:/*
 	pop bc
 	restoreBank "ram"
 	
-	ld e, c
-	ld d, b
-	call removeActor
-	
 	ld l, c
 	ld h, b
 	ld a, LOW(scrollText)
@@ -187,7 +183,11 @@ menuLoadText:/*
 	ldi [hl], a
 	ld e, c
 	ld d, b
-	jp spawnActor
+	call spawnActor
+	
+	ld e, c
+	ld d, b
+	jp removeActor
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 	
