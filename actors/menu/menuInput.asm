@@ -19,8 +19,8 @@ menuInput:
 	ld a, [last_played_song] ;get the song the user just played
 	ldi [hl], a
 	
-	ld de, menuInput.actor_list
-	ld c, menuInput.end - menuInput.actor_list
+	ld de, menuInput.low_priority_actors
+	ld c, menuInput.end - menuInput.low_priority_actors
 	rst $10 ;copy child actors into our local ram. we will write the intended variable for them later.
 	
 	restoreBank "ram"
@@ -77,7 +77,7 @@ menuInput:
 		
 	.copyVariables:
 	ld e, a ;e = desired variable for each child actor
-	ld d, ((menuInput.end - menuInput.actor_list) >> 2) ;d = loop variable
+	ld d, ((menuInput.end - menuInput.low_priority_actors) >> 2) ;d = loop variable
 	
 	.varLoop: ;conveniently, hl is pointing to the byte before the first actor. so after adding sizeof(actor) each loop we will point to each actor's variable.
 		ld a, l
@@ -90,12 +90,11 @@ menuInput:
 		dec d
 	jr nz, menuInput.varLoop
 	
-	ld a, ((menuInput.end - menuInput.actor_list) >> 2) - 1 ;loop through each actor
+	ld a, ((menuInput.high_priority_actors - menuInput.low_priority_actors) >> 2) + 1;loop through each actor
 	.spawnLoop: ;conveniently, the actors start on a multiple of 4. if we consider the main function + variable to be "actor 0", we just loop from actor N down to actor 1 and terminate.
 		ldh [scratch_byte], a
 		add a
 		add a
-		add $04
 		add c
 		ld e, a
 		ld a, b
@@ -103,17 +102,18 @@ menuInput:
 		ld d, a ;de = actor_list[i]
 		call spawnActor
 		ldh a, [scratch_byte]
-		sub $01
-	jr nc, menuInput.spawnLoop
+		inc a
+		cp ((menuInput.end - menuInput.low_priority_actors) >> 2) + 1
+	jr nz, menuInput.spawnLoop
 	
-	updateActorMain menuInput.wait
+	updateActorMain menuInput.doLowPrio
 	
 	swapInRam menu_bkg_index
 	ld hl, QUEUEADJUSTPRE
 	add hl, bc
 	ld d, [hl] ;d = amount to adjust steps by
 	ld e, $06 ;e = loop counter
-	ld [hl], $0E ;this byte pulls double duty as the timer later, load it with 14 frames
+	ld [hl], $04 ;this byte pulls double duty as the timer later, load it with 14 frames
 	ld bc, menu_bkg_index
 	ld hl, menuInput.moduli
 	
@@ -132,6 +132,32 @@ menuInput:
 	jr nz, menuInput.preProcess
 	
 	restoreBank "ram"
+	ret
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+.doLowPrio:
+	ld hl, TIMER
+	add hl, bc
+	dec [hl]
+	ret nz
+	
+	ld [hl], $0A
+	updateActorMain menuInput.wait
+	ld a, ((menuInput.high_priority_actors - menuInput.low_priority_actors) >> 2) ;loop through each actor
+	.spawnLoop2: ;conveniently, the actors start on a multiple of 4. if we consider the main function + variable to be "actor 0", we just loop from actor N down to actor 1 and terminate.
+		ldh [scratch_byte], a
+		add a
+		add a
+		add c
+		ld e, a
+		ld a, b
+		adc $00
+		ld d, a ;de = actor_list[i]
+		call spawnActor
+		ldh a, [scratch_byte]
+		dec a
+	jr nz, menuInput.spawnLoop2
 	ret
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -157,10 +183,11 @@ menuInput:
 .moduli:
 	db $0A, $0A, $09, $07, $05, $03
 
-.actor_list:
+.low_priority_actors:
 	NEWACTOR fetchTiles, $FF
 	NEWACTOR fetchAttributes, $FF
 	NEWACTOR menuMap, $FF
+.high_priority_actors:
 	NEWACTOR menuScroller, $FF
 	NEWACTOR menuLoadText, $FF
 	.end
