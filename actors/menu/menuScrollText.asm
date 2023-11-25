@@ -1,7 +1,7 @@
 SECTION "SCROLL TEXT", ROMX
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;
+;reads scroll direction and moves the entire sprite layer up or down accordingly.
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 VARIABLE = $0003
@@ -16,15 +16,15 @@ scrollText:
 	rrca
 	rrca
 	rrca
-	ld [hl], a ;convert direction bit into a starting index for scrolling. $01 for up and $11 for down.
+	ld [hl], a ;convert direction bit into a starting index for scrolling. $00 for up and $10 for down.
 	updateActorMain scrollText.main
 	
 .main:
 	ld hl, SCROLLINDEX
 	add hl, bc
 	inc [hl]
-	ld a, [hl] ;increment index and grab it. because the actor spawns a frame late, we will actually start at index 2.
-	and $0F
+	ld a, [hl] ;increment index and grab it
+	and $0F ;scroll ends after 15 frames regardless of starting index
 	jr nz, scrollText.doScroll
 		ld e, c
 		ld d, b
@@ -38,25 +38,25 @@ scrollText:
 	ld l, a
 	ld a, h
 	adc $00
-	ld h, a
+	ld h, a ;hl points to current scroll entry
 	
 	ldi a, [hl]
 	ld b, a
-	ld c, [hl] ;b = y distance, c = x distance
+	ld c, [hl] ;b = y distance, c = x distance (because dw flips the bytes)
 	
 	swapInRam shadow_oam
 	ld hl, shadow_oam
 	ld e, $28
-	call scrollText.adjustPos
+	call scrollText.adjustPos ;copy 40 sprites to shadow oam
 	
 	swapInRam on_deck
 	ld hl, on_deck
 	ld e, $28
-	call scrollText.adjustPos
+	call scrollText.adjustPos ;copy 40 sprites to backup oam
 	
 	ld hl, up_next
 	ld e, $14
-	call scrollText.adjustPos
+	call scrollText.adjustPos ;copy 20 sprites to backup oam #2
 	
 	restoreBank "ram"
 	restoreBank "ram"
@@ -73,12 +73,12 @@ scrollText:
 .adjustPos: ;hl points to oam, b = y axis adjustment, c = x axis adjustment, e = number of sprites to adjust
 	ld a, [hl]
 	add b
-	ldi [hl], a
+	ldi [hl], a ;add y position
 	ld a, [hl]
 	add c
-	ldi [hl], a
+	ldi [hl], a ;add x position
 	inc hl
-	inc hl
+	inc hl ;point to next entry
 	dec e
 jr nz, scrollText.adjustPos
 ret
