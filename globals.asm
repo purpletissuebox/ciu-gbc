@@ -34,8 +34,10 @@ color_scheme:
 	ds $01
 note_skin:
 	ds $01
+sort_method:
+	ds $01
 .padding:
-	ds $EB
+	ds $EA
 ENDU
 
 score:
