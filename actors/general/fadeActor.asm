@@ -326,23 +326,22 @@ ENDM
 	.end
 
 .color_table:
-	FADEENTRY $50, $30, "up",   logo_colors, $01
-	FADEENTRY $90, $20, "down", logo_colors, $02
-	FADEENTRY $10, $7F, "up",   title_colors, $03
-	FADEENTRY $80, $30, "down", title_colors, $00
-	FADEENTRY $01, $7F, "up",   menu_colors, $04
-	FADEENTRY $01, $40, "up",   character_colors, $05
+	FADEENTRY $50, $30, "up",   logo_colors, $00      ;0
+	FADEENTRY $90, $20, "down", logo_colors, $01      ;1
+	FADEENTRY $10, $7F, "up",   title_colors, $02     ;2
+	FADEENTRY $80, $30, "down", title_colors, $03     ;3
+	FADEENTRY $80, $30, "down", title_colors, $04     ;4
+	FADEENTRY $01, $7F, "up",   menu_colors, $05      ;5
+	FADEENTRY $01, $40, "up",   character_colors, $06 ;6
 
 .actor_table:
-	dw dummy_actor
-	db $01
-	db $FF
-	NEWACTOR setColors.init,$01
-	NEWACTOR changeSceneActor,TITLE
-	NEWACTOR initSong,$00 ;title screen
-	NEWACTOR menuInput.init,$00
-	NEWACTOR characterEntry.stall,$10
-	NEWACTOR initSong,$01 ;replace later
+	NEWACTOR setColors.init,$01         ;0
+	NEWACTOR changeSceneActor,TITLE     ;1
+	NEWACTOR initSong,$00               ;2
+	NEWACTOR changeSceneActor,MENU      ;3
+	NEWACTOR changeSceneActor,CHARACTER ;4
+	NEWACTOR menuInput.init,$00         ;5
+	NEWACTOR characterEntry.stall,$10   ;6
 
 logo_colors:
 	INCBIN "../assets/gfx/palettes/logoColors.bin"

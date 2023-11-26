@@ -6,7 +6,6 @@ SECTION "TITLE_HUNTER", ROMX
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 TIMER = $000F
-SINEACTOR = $0008
 
 titleEnd:
 .main:
@@ -14,55 +13,31 @@ titleEnd:
 	and $08
 	ret z ;wait for player to press start
 	
-	xor a
-	ldh [music_on], a ;disable music
-	updateActorMain titleEnd.wait
-	
-	xor a
-	ld c, a ;c = actor table index
-	.actorLoop:
-		ld de, titleEnd.actor_table
-		add a
-		add a
-		add e
-		ld e, a
-		ld a, d
-		adc $00
-		ld d, a ;de = actorTable[i]
-		call spawnActor
-		inc c ;i++
-		ld a, c
-		cp ((titleEnd.end - titleEnd.actor_table) >> 2)
-	jr nz, titleEnd.actorLoop
-	ret
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-.wait:
-	ld hl, TIMER
-	add hl, bc
-	inc [hl]
-	ret nz ;wait for fadeout to finish
-	
 	ld e, c
 	ld d, b
 	call removeActor
+	
+	xor a
+	ldh [music_on], a ;disable music
+	
+	ld de, titleEnd.remove_sprites
+	call spawnActor ;fade sprite layer
 	
 	swapInRam save_string
 	ld de, save_string
 	ld hl, titleEnd.save_string
 	ld c, $10
-	rst $18
+	rst $18 ;check if save file contains a special string
 	
-	ld a, MENU
+	ld b, $03 ;if it does, progress to the menu scene
 	jr z, titleEnd.saveExists
-		ld a, CHARACTER
+		inc b ;else character scene
 	.saveExists:
 	
-	call changeScene
 	restoreBank "ram"
-	
-	ret
+	ld a, b	
+	ld de, titleEnd.remove_bkg
+	jp spawnActorV
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 	
@@ -75,9 +50,9 @@ titleEnd:
 .save_string:
 	db "save file set up"
 	
-.actor_table:
-	;NEWACTOR initSong,$01
-	NEWACTOR setColors,$03
+.remove_sprites:
 	NEWACTOR setColorsOBJ,$01
-	.end
+
+.remove_bkg:
+	NEWACTOR setColors,$00
 	
