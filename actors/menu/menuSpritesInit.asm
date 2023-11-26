@@ -5,31 +5,20 @@ SECTION "MENU SPRITES", ROMX
 ;copies strings to oam and initializes scanline interrupts.
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-LOADER = $0004
-
 menuSpritesInit:
 .loadSprites:
-	ld hl, LOADER
-	add hl, bc
-	ld e, l
-	ld d, h
-	ld a, LOW(menuLoadText.init)
-	ldi [hl], a
-	ld a, HIGH(menuLoadText.init)
-	ldi [hl], a
-	ld a, BANK(menuLoadText.init)
-	ldi [hl], a
-	
 	swapInRam save_file
 	ld a, [last_played_song]
 	sub $02
 	and $3F
-	ld [hl], a
-	call spawnActor
+	ld de, menuSpritesInit.loader_actor
+	call spawnActorV
 	
 	restoreBank "ram"
 	updateActorMain menuSpritesInit.doInterrupt
 	ret
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 .doInterrupt:
 	swapInRam on_deck
@@ -58,3 +47,8 @@ menuSpritesInit:
 	ld e, c
 	ld d, b
 	jp removeActor
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+.loader_actor:
+	NEWACTOR menuLoadText, $00
