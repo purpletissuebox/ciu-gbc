@@ -358,7 +358,7 @@ menuTilesInit:
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 .get_colors:
-	NEWACTOR setColors, $84
+	NEWACTOR setColors, $85
 	NEWACTOR setColorsOBJ, $83
 	
 .chunk_positions:

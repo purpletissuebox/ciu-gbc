@@ -44,7 +44,7 @@ characterManager:
 .actor_table:
 	NEWACTOR characterTiles, $00
 	NEWACTOR characterSpritesInit, $00
-	NEWACTOR setColors, $05
+	NEWACTOR setColors, $06
 	NEWACTOR setColorsOBJ, $02
 	NEWACTOR charToggle, $00
 	;NEWACTOR characterFlicker,$00
