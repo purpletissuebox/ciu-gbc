@@ -286,7 +286,8 @@ loadSongName: ;de = string to load, hl = oam entry to start at, b = y coordinate
 		ld a, [de]
 		inc de
 		ldi [hl], a ;save tile ID
-		inc hl
+		xor a
+		ldi [hl], a ;attribute
 	jr loadSongName.copyRow
 	
 		.space:
