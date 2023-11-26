@@ -350,6 +350,7 @@ menuTilesInit:
 	
 	ld de, menuTilesInit.get_colors
 	call spawnActor
+	call spawnActor
 	ld e, c
 	ld d, b
 	jp removeActor
@@ -358,6 +359,7 @@ menuTilesInit:
 
 .get_colors:
 	NEWACTOR setColors, $84
+	NEWACTOR setColorsOBJ, $83
 	
 .chunk_positions:
 	dw menu_bands0 | BANK(menu_bands0),   menu_bands1 | BANK(menu_bands1),   menu_G_chunks | BANK(menu_G_chunks),   menu_O_chunks | BANK(menu_O_chunks),   menu_Y_chunks | BANK(menu_Y_chunks),   menu_P_chunks | BANK(menu_P_chunks)
