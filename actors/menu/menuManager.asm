@@ -64,7 +64,6 @@ menuManager:
 
 .actor_table:
 	NEWACTOR menuTilesInit,$00
-	NEWACTOR handleSort,$00
 	NEWACTOR menuSpritesInit,$00
-	NEWACTOR dummy_actor,$01
+	NEWACTOR handleSort,$01
 	.end
