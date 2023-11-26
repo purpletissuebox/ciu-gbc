@@ -188,4 +188,5 @@ menuInput:
 .high_priority_actors:
 	NEWACTOR menuScroller, $FF
 	NEWACTOR menuLoadText, $FF
+	NEWACTOR scrollText, $FF
 	.end
