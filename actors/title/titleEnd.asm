@@ -41,12 +41,6 @@ titleEnd:
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 	
-.sine_wave:
-	NEWACTOR titleSineWave,$00
-.main_menu:
-	NEWACTOR menuManager,$00
-.character_select:
-	NEWACTOR characterManager,$00
 .save_string:
 	db "save file set up"
 	
