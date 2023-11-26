@@ -80,7 +80,8 @@ init: ;puts all hardware registers into a known state, loads minimal text graphi
 	ld [$FF40], a
 	ldh a, [$FF41]
 	and $07
-	ldh [$FF41], a ;enable window + sprite layers, choose memory regions, and disable stat interrupt sources
+	or $40
+	ldh [$FF41], a ;enable window + sprite layers, choose memory regions, and enable stat interrupt source only for LYC
 	
 	ld a, $01
 	ldh [rom_bank], a
