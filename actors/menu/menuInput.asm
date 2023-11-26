@@ -29,13 +29,9 @@ menuInput:
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 	
 .main:
-	;swapInRam game_mode
-	;ld a, [game_mode]
-	;ld e, a
-	;restoreBank "ram"
-	;ld a, e
-	;cp MENU
-	;ret nz
+	ldh a, [scene]
+	cp MENU
+	ret nz
 	
 	ldh a, [press_input]
 	bit 6, a
