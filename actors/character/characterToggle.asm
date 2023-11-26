@@ -6,9 +6,8 @@ SECTION "CHARACTER TOGGLE", ROMX
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 VARIABLE = $0003
-CHOICE = $000A
-SCROLLER = $000B
-EXTRAVARIABLE = $000F
+EXTRAVARIABLE = $000E
+CHOICE = $000F
 
 charToggle:
 .wait: ;we need to wait until the initial scroll is done, which needs to wait for screen fade to complete, which the manager will trigger.
@@ -17,29 +16,12 @@ charToggle:
 	and a
 		jr z, charToggle.keepWaiting
 	
-	updateActorMain charToggle.setUpScroller
-	ld de, charToggle.initLeft ;spawn an actor to select the left character
+	updateActorMain charToggle.pollInput
+	ld de, charToggle.scroller_actor ;spawn an actor to select the left character
 	call spawnActor
 	
 	.keepWaiting:
 	restoreBank "ram"
-	ret
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-	
-.setUpScroller: ;copies the scroller actor into local memory, leaving the variable blank to fill in later.
-	ld hl, SCROLLER
-	add hl, bc
-	ld de, charToggle.initLeft
-	ld a, [de]
-	inc de
-	ldi [hl], a
-	ld a, [de]
-	inc de
-	ldi [hl], a
-	ld a, [de]
-	ldi [hl], a
-	updateActorMain charToggle.pollInput
 	ret
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -65,28 +47,22 @@ charToggle:
 	cp [hl]
 		ret z ;if we already have that side selected, do nothing
 	
-	ldi [hl], a ;else save new choice to local memory
-	ld e, l
-	ld d, h ;de now points to the scroller actor
-	inc hl
-	inc hl
-	inc hl ;and hl points to its variable
+	ldd [hl], a ;else save new choice to local memory, hl now points to temp memory
 	
 	;construct variable for scroller (see below section). the timer will start at zero, so bits 0-4 are already done.
 	swap a
-	add a ;put character choice in bit 5. bit 6 is zero.
-	ldi [hl], a
-	xor $60 ;toggle direction and character for the second scroller
-	ld [hl], a
-	push de
-	call spawnActor ;spawn scroller for selected character to go up
+	add a ;put character choice in bit 5. bit 6 is zero, signifiying up.
+	ld [hl], a ;save for later
 	
-	pop de
+	xor $60 ;toggle direction and character for the second scroller
+	ld de, charToggle.scroller_actor
+	call spawnActorV ;spawn scroller for deselected character to go down
+	
 	ld hl, EXTRAVARIABLE
 	add hl, bc
-	ldd a, [hl]
-	ld [hl], a
-	jp spawnActor ;spawn scroller for deselected character to go down
+	ld a, [hl]
+	ld de, charToggle.scroller_actor
+	jp spawnActorV ;spawn scroller for selected character to go up
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -105,7 +81,7 @@ charToggle:
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-.initLeft:
+.scroller_actor:
 	NEWACTOR doCharScroll, $00
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
