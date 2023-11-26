@@ -829,6 +829,74 @@ retriggerOAM: ;scanline interrupt that loads extra sprites.
 	reti	
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+spawnActorV: ;de = ptr to actor struct, a = variable
+;alternative to spawnActor. this version has a variable passed in via a register instead of in memory.
+;this makes it easier to change the variable, but more difficult to get pointers to the actor after it spawns.
+;as a result, de will no longer point to the next actor on return. see spawnActor for more details.
+	push bc
+	ld b, a ;store variable in b to access HRAM later
+	ld c, $03
+	
+	ldh a, [next_actor]
+	ld l, a
+	ldh a, [next_actor+1]
+	ld h, a
+	rst $10 ;copy actor's function into the next free slot
+	ld a, b
+	ldd [hl], a ;save variable at the end
+	dec hl
+	dec hl
+	ld e, l
+	ld d, h ;save ptr to actor for later
+	
+	ldh a, [first_actor]
+	ld c, a
+	ldh a, [first_actor+1]
+	ld b, a ;bc points to current actor
+	
+	.loop:
+		ld hl, ACTORSIZE -2
+		add hl, bc
+		ldi a, [hl]
+		or [hl] ;check current_actor.next
+		jr z, spawnActorV.foundEnd ;if zero, we need to append our actor
+		
+		ldd a, [hl]
+		ld b, a
+		ld c, [hl] ;else update current_actor = current_actor.next and keep looking
+	jr spawnActorV.loop
+	
+	.foundEnd:
+		ld a, d
+		ldd [hl], a
+		ld [hl], e ;append
+		
+		ld hl, $0004
+		add hl, de
+		xor a
+		ld c, ACTORSIZE - 4
+		rst $08 ;zero out remaining memory
+
+	ld bc, ACTORSIZE - 1
+	ld hl, ACTORHEAP + 1
+	
+	.findEmpty:
+		add hl, bc ;hl points to the ith actor
+		ldi a, [hl]
+		or [hl] ;check if empty
+	jr nz, spawnActorV.findEmpty
+	
+	dec hl ;if empty, this is our next free slot to use
+	ld a, l
+	ldh [next_actor], a
+	ld a, h
+	ldh [next_actor+1], a ;mark it as such and return
+	
+	pop bc
+	ret
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 	
 dummy_actor:
 	ld e, c
