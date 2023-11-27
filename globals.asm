@@ -140,6 +140,16 @@ up_next:
 	.end
 .padding:
 	ds $60
+on_deck_2:
+	ds $A0
+	.end
+.padding:
+	ds $60
+up_next_2:
+	ds $A0
+	.end
+.padding:
+	ds $60
 
 SECTION "GFX_DATA_6", WRAMX[$D000], BANK[6]
 UNION
