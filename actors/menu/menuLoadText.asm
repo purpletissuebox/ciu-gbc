@@ -5,29 +5,9 @@ SECTION "LOAD TEXT", ROMX
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 VARIABLE = $0003
-STARTX = $08
+STARTX = $00
 
-menuLoadText:/*
-	ldh a, [$FF44]
-	cp $59 ;at scanline 58, oam contains either songs CD or D+below. in either case, the remaining songs have been rendered already and we can overwrite oam.
-	jr nc, menuLoadText.init
-	
-	;before scanline 58, the state of the sprites are unknown, so we wait.
-	ld hl, ACTORSIZE - 2
-	add hl, bc
-	ldi a, [hl]
-	or [hl]
-	jr z, menuLoadText ;if we are the last actor, we can just spin on the scanline counter. else let the other actors run.
-	
-	ld e, c
-	ld d, b
-	call spawnActor
-	
-	ld e, c
-	ld d, b
-	jp removeActor*/
-
-.init:
+menuLoadText:
 ;because of the fact that songs need to be in scanline order in oam, we cant use a circular queue like for the bkg layer.
 ;if we are scrolling UP, we want 1 song above + A, BC, D. scanline interrupts will fire on 18 and 58
 ;if we are scrolling DOWN, we want AB, CD, 1 song below. scanline interrupts will fire on 38 and 78
@@ -83,9 +63,16 @@ menuLoadText:/*
 	
 	pop bc
 	push bc
+	
 	ld hl, VARIABLE
 	add hl, bc
-	ldi a, [hl]
+	ld a, [hl]
+	ld de, menuLoadText.finalize_actor
+	call spawnActorV
+	
+	ld hl, VARIABLE
+	add hl, bc
+	ldi a, [hl]	
 	and $80 ;initialize position of first sprite based on if we scroll up or down
 	ld bc, $F800 + STARTX ;b = y position, c = x position
 	jr z, menuLoadText.up2
@@ -126,14 +113,21 @@ menuLoadText:/*
 	add $04 + STARTX
 	ld c, a
 	
-	;third string
 	swapInRam on_deck
+	ld a, [on_deck.active_buffer]
+	xor $02
+	and $FE
+	ldh [scratch_byte], a
+	
+	;third string
 	ldi a, [hl]
 	ld e, a
 	ldi a, [hl]
 	ld d, a
 	push hl
-	ld hl, on_deck
+	ldh a, [scratch_byte]
+	ld h, a
+	ld l, $00 ;ld hl, on_deck
 	call loadSongName
 	pop hl
 	ld a, b
@@ -150,7 +144,9 @@ menuLoadText:/*
 	ldi a, [hl]
 	ld d, a
 	push hl
-	ld hl, on_deck + $50
+	ldh a, [scratch_byte]
+	ld h, a
+	ld l, $50 ;ld hl, on_deck + $50
 	call loadSongName
 	pop hl
 	ld a, b
@@ -165,7 +161,10 @@ menuLoadText:/*
 	ldi a, [hl]
 	ld e, a
 	ld d, [hl]
-	ld hl, up_next
+	ldh a, [scratch_byte]
+	inc a
+	ld h, a
+	ld l, $00 ;ld hl, up_next
 	call loadSongName
 	
 	restoreBank "ram"
@@ -178,6 +177,9 @@ menuLoadText:/*
 	jp removeActor
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+.finalize_actor:
+	NEWACTOR menuSwapBuffers,$00
 	
 .songPtrs:
 SONGID = 0
@@ -187,16 +189,16 @@ SONGID = SONGID + 1
 ENDR
 	
 songNames:
-.00:	db "what up\t"
-.01:	db "guys it's me\t"
-.02:	db "ur boy purp\ntissue box\t"
-.03:	db "wow i need\n64 of these\t"
-.04:	db "song names\ndont i\t"
-.05:	db "song name\nnumber 5\t"
-.06:	db "song name\nnumber 6\t"
-.07:	db "song name\nnumber 7\t"
-.08:	db "song name\nnumber 8\t"
-.09:	db "song name\nnumber 9\t"
+.00:	db "song name\nnumber 00\t"
+.01:	db "song name\nnumber 01\t"
+.02:	db "song name\nnumber 02\t"
+.03:	db "song name\nnumber 03\t"
+.04:	db "song name\nnumber 04\t"
+.05:	db "song name\nnumber 05\t"
+.06:	db "song name\nnumber 06\t"
+.07:	db "song name\nnumber 07\t"
+.08:	db "song name\nnumber 08\t"
+.09:	db "song name\nnumber 09\t"
 .0A:	db "song name\nnumber 10\t"
 .0B:	db "song name\nnumber 11\t"
 .0C:	db "song name\nnumber 12\t"
@@ -300,15 +302,17 @@ loadSongName: ;de = string to load, hl = oam entry to start at, b = y coordinate
 	ld c, $C4 ;y coordinate for an unused entry
 	
 	ld a, l
+	rrca
+	rrca ;convert to oam entry ID
+	sub $02
 	.mod:
-		sub $50
+		sub $14
 	jr nc, loadSongName.mod ;if we are in the upper 20 sprites ($50 - $A0), subtract again
 	
-	sra a
-	sra a ;a now holds the number of remaining sprites * (-1)
-	dec a
+	cpl
+	
 	.loop:
-		inc a
+		dec a
 		ret z
 		ld [hl], c ;set y coordinate of all unused sprites to off the bottom of the screen. this way the scroll actor cannot place them onscreen.
 		add hl, de ;go to next sprite
