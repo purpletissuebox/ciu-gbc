@@ -11,7 +11,13 @@ scrollText:
 .init:
 	ld hl, VARIABLE
 	add hl, bc
-	ldi a, [hl] ;get variable
+	ld a, [hl] ;get variable
+	ld de, scrollText.lyc_worker
+	call spawnActorV
+	
+	ld hl, VARIABLE
+	add hl, bc
+	ldi a, [hl]
 	and $80
 	rrca
 	rrca
@@ -50,11 +56,17 @@ scrollText:
 	call scrollText.adjustPos ;copy 40 sprites to shadow oam
 	
 	swapInRam on_deck
-	ld hl, on_deck
+	ld a, [on_deck.active_buffer]
+	and $FE
+	ld h, a
+	ld l, $00 ;ld hl, on_deck
 	ld e, $28
 	call scrollText.adjustPos ;copy 40 sprites to backup oam
 	
-	ld hl, up_next
+	ld a, [on_deck.active_buffer]
+	or $01
+	ld h, a
+	ld l, $00 ;ld hl, up_next
 	ld e, $14
 	call scrollText.adjustPos ;copy 20 sprites to backup oam #2
 	
@@ -67,6 +79,9 @@ scrollText:
 .scroll_amts:	
 	dw $7F7F, $0000, $0102, $0103, $0102, $0202, $0102, $0103, $0102, $0102, $0103, $0102, $0202, $0102, $0103, $0102 ;up
 	dw $7F7F, $0000, $FFFE, $FFFD, $FFFE, $FEFE, $FFFE, $FFFD, $FFFE, $FFFE, $FFFD, $FFFE, $FEFE, $FFFE, $FFFD, $FFFE ;down
+	
+.lyc_worker:
+	NEWACTOR scanlineBuddy, $00
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
