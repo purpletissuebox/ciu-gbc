@@ -111,6 +111,7 @@ INCLUDE "../actors/menu/menuScroll.asm"
 INCLUDE "../actors/menu/menuLoadText.asm"
 INCLUDE "../actors/menu/menuScrollText.asm"
 INCLUDE "../actors/menu/menuSpritesInit.asm"
+INCLUDE "../actors/menu/menuScanline.asm"
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;rst routines
