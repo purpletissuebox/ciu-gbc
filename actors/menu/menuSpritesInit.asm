@@ -14,30 +14,41 @@ menuSpritesInit:
 	ld de, menuSpritesInit.loader_actor
 	call spawnActorV
 	
+	swapInRam on_deck
+	ld a, $D1
+	ld [on_deck.active_buffer], a
+	
 	restoreBank "ram"
+	restoreBank "ram"
+	
 	updateActorMain menuSpritesInit.doInterrupt
+	
 	ret
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 .doInterrupt:
-	swapInRam on_deck
-	ld a, $D1
-	ld [on_deck.active_buffer], a
 	
-	ld hl, up_next + $0050
+	swapInRam up_next
+	ld hl, up_next + $50
 	ld de, $0004
 	ld a, $14
-	.loop:
+	
+	.spriteLoop1:
 		ld [hl], d
 		add hl, de
 		dec a
-	jr nz, menuSpritesInit.loop
+	jr nz, menuSpritesInit.spriteLoop1
+	
+	ld hl, up_next_2 + $0050
+	ld a, $14
+	.spriteLoop2:
+		ld [hl], d
+		add hl, de
+		dec a
+	jr nz, menuSpritesInit.spriteLoop2
 	
 	restoreBank "ram"
-	
-	ld a, $18
-	ldh [$FF45], a
 	
 	ld hl, $FF0F
 	res 1, [hl]
