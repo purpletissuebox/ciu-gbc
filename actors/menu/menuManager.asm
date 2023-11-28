@@ -15,7 +15,7 @@ menuManager:
 	sub $60 ;wait for timer
 		ret c
 	
-	cp ((menuManager.end - menuManager.actor_table) >> 2)
+	cp ((menuManager.end - menuManager.actor_table) >> 2) ;check if we spawned the entire list
 	jr nz, menuManager.spawnNext
 		ld e, c
 		ld d, b
@@ -25,7 +25,7 @@ menuManager:
 	ld l, a
 	swapInRam last_played_song
 	ld a, [last_played_song]
-	ld h, a ;h = last played song, l = actor index to spawn
+	ld h, a ;h = last played song, l = actor index to spawn next
 	restoreBank "ram"
 		
 	ld de, menuManager.actor_table
@@ -44,7 +44,8 @@ menuManager:
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 .actor_table:
-	NEWACTOR menuTilesInit,$00
+	NEWACTOR handleSort,$00
+	NEWACTOR menuHUDInit,$00
 	NEWACTOR menuSpritesInit,$00
-	NEWACTOR handleSort,$01
+	NEWACTOR menuTilesInit,$00
 	.end
