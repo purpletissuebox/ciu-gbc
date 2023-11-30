@@ -51,6 +51,7 @@ menuInput:
 	bit 1, a
 	jr z, menuInput.checkA
 		jp menuInput.B
+	.checkA:
 	bit 0, a
 	ret z
 		jp menuInput.A
