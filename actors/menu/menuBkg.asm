@@ -114,7 +114,7 @@ menuBkg:
 		add e ;apply offset
 		.mod:
 			sub [hl] ;make sure it stays in the appropriate range
-		jr nc, menuInput.mod
+		jr nc, menuBkg.mod
 		add [hl]
 		ld [bc], a ;save it back
 		inc bc
