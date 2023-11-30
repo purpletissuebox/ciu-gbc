@@ -1,4 +1,4 @@
-SECTION "MENU OBJ WRAPPER"
+SECTION "MENU OBJ WRAPPER", ROMX
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;spawns child actors to load new sprites on the menu scene.
@@ -16,7 +16,7 @@ menuSprites:
 	add hl, bc
 	ldi a, [hl]
 	cp $80
-		jr c, .menuSprites.up
+		jr c, menuSprites.up
 	
 	;song ID refers to the song below us. need the song above us instead.
 	sub $02
