@@ -5,8 +5,143 @@ SECTION "LOAD TEXT", ROMX
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 VARIABLE = $0003
+TASKSRCHI = $0005
+TASKSRCBANK = $0006
+TASKDESTHI = $0008
+NUMTASKS = $000A
+SONGLIST = $000B
 STARTX = $00
 
+menuLoadText:
+	push bc
+	swapInRam sort_table
+	ld hl, VARIABLE
+	add hl, bc
+	ld b, [hl] ;variable = external ID for the first song to render
+	restoreBank "ram"
+	
+	ld hl, SONGLIST
+	add hl, bc
+	ld a, b ;retrieve variable
+	ld c, $05 ;c = loop counter
+	
+	ld de, sort_table
+	add e
+	ld e, a
+	ld a, d
+	adc $00
+	ld d, a ;de = pointer to internal song ID
+	
+	.copyLoop:
+		ld a, [de]
+		inc de
+		ldi [hl], a ;copy 5 internal IDs to local memory
+		ld a, e
+		cp LOW(sort_table.end)
+		jr nz, menuLoadText.noWrap
+			ld de, sort_table
+		.noWrap:
+		dec c
+	jr nz, menuLoadText.copyLoop
+	
+	swapInRam shadow_oam
+	ld hl, shadow_oam
+	ld a, b ;retrieve variable
+	and $80
+	
+	ld bc, $F800 + STARTX ;if scrolling up, first song title is above the screen.
+	jr z, menuLoadText.up
+		ld bc, $1800 + STARTX + $10 ;if scrolling down, move 4 tiles down, 2 tiles over.
+	.up:
+	
+	call menuLoadText.loadSongNames ;copy sprites to shadow oam
+	restoreBank "ram"
+	pop bc
+	
+	;next we just need the actual tile data for each sprite. we will initialize a graphics task, then slightly change it for each song name.
+	;each task is 0x100 in size. as a result the bank + low address will stay fixed. low addr is already zero but we need bank initialized:
+	ld hl, TASKSRCBANK
+	add hl, bc
+	ld a, BANK(song_names_vwf)
+	ldi [hl], a
+	ld a, LOW(sprite_tiles1) | BANK(sprite_tiles1)
+	ldi [hl], a
+	ld a, HIGH(sprite_tiles1)
+	ldi [hl], a
+	ld [hl], $0F ;16 tiles
+	
+	.gfxLoop:
+		ld hl, NUMTASKS ;we will use the number of completed tasks as a loop counter. the background actors are staggered so they shouldnt clog up the gfx task buffer
+		add hl, bc
+		ldi [hl], a ;hl now points to song list
+		cp $05
+			jr z, menuLoadText.break
+		
+		add l
+		ld l, a
+		ld a, h
+		adc $00
+		ld h, a ;hl = pointer to song ID. to multiply by 256 we will just drop it in the high byte.
+		ld a, [hl]
+		add HIGH(song_names_vwf) ;apply offset into the 4000-7FFF range
+		
+		ld hl, TASKSRCHI
+		add hl, bc
+		ld [hl], a
+		
+		call submitGraphicsTask
+		ld hl, TASKDESTHI
+		add hl, bc
+		inc [hl] ;similarly, the upcoming graphics will load in 16 tiles = 256 bytes later, so just increment the high part of the address.
+	jr menuLoadText.gfxLoop
+	.break:
+	
+	ld e, c
+	ld d, b
+	jp removeActor
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+	
+.loadSongNames: ;hl = pointer to oam, b = y coordinate, c = x coordinate
+;each sprite will just use the next available tile. this means we can avoid actually reading the string and instead just increment by fixed amounts.
+	ld d, $00 ;d will accumulate how many tiles we have used
+	.nextSong:
+		ld e, $08 ;e counts how many sprites are left for the current string
+		.loop:
+			ld a, b
+			ldi [hl], a ;y coord
+			ld a, c
+			ldi [hl], a ;x coord
+			add $08
+			ld c, a
+			ld a, d
+			ldi [hl], a ;tile ID
+			add $02
+			ld d, a
+			ld [hl], $08 ;sprite attr, they will go in bank 1
+			inc hl
+			
+			dec e
+		jr nz, menuLoadText.loop
+		
+		cp ((shadow_oam.end - shadow_oam) >> 2) ;a still contains tile ID. if we reach all 40 sprites, then we are done
+			ret z
+		
+		ld a, b
+		add $20
+		ld b, a
+		rra
+		add $04 + STARTX
+		ld c, a ;increment vertical position and reset horizontal position
+	jr menuLoadText.nextSong
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+SECTION "SONG NAME GRAPHICS", ROMX
+song_names_vwf:
+	INCBIN "../assets/gfx/sprites/song_names.bin"
+
+/*
 menuLoadText:
 ;because of the fact that songs need to be in scanline order in oam, we cant use a circular queue like for the bkg layer.
 ;if we are scrolling UP, we want 1 song above + A, BC, D. scanline interrupts will fire on 18 and 58
@@ -316,4 +451,4 @@ loadSongName: ;de = string to load, hl = oam entry to start at, b = y coordinate
 		ret z
 		ld [hl], c ;set y coordinate of all unused sprites to off the bottom of the screen. this way the scroll actor cannot place them onscreen.
 		add hl, de ;go to next sprite
-	jr loadSongName.loop
+	jr loadSongName.loop*/
