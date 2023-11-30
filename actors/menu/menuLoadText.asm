@@ -130,7 +130,7 @@ menuLoadText:
 		ld a, b
 		add $20
 		ld b, a
-		rra
+		rrca
 		add $04 + STARTX
 		ld c, a ;increment vertical position and reset horizontal position
 	jr menuLoadText.nextSong
