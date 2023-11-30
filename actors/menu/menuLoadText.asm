@@ -17,12 +17,11 @@ menuLoadText:
 	swapInRam sort_table
 	ld hl, VARIABLE
 	add hl, bc
-	ld b, [hl] ;variable = external ID for the first song to render
-	restoreBank "ram"
+	ld a, [hl] ;variable = external ID for the first song to render
 	
 	ld hl, SONGLIST
 	add hl, bc
-	ld a, b ;retrieve variable
+	ld b, a ;retrieve variable
 	ld c, $05 ;c = loop counter
 	
 	ld de, sort_table
@@ -56,6 +55,7 @@ menuLoadText:
 	
 	call menuLoadText.loadSongNames ;copy sprites to shadow oam
 	restoreBank "ram"
+	restoreBank "ram"
 	pop bc
 	
 	;next we just need the actual tile data for each sprite. we will initialize a graphics task, then slightly change it for each song name.
@@ -73,7 +73,7 @@ menuLoadText:
 	.gfxLoop:
 		ld hl, NUMTASKS ;we will use the number of completed tasks as a loop counter. the background actors are staggered so they shouldnt clog up the gfx task buffer
 		add hl, bc
-		ldi [hl], a ;hl now points to song list
+		ldi a, [hl] ;hl now points to song list
 		cp $05
 			jr z, menuLoadText.break
 		
@@ -124,7 +124,7 @@ menuLoadText:
 			dec e
 		jr nz, menuLoadText.loop
 		
-		cp ((shadow_oam.end - shadow_oam) >> 2) ;a still contains tile ID. if we reach all 40 sprites, then we are done
+		cp ((shadow_oam.end - shadow_oam) >> 1) ;a still contains tile ID. if we reach all 40 sprites, then we are done
 			ret z
 		
 		ld a, b
@@ -139,7 +139,7 @@ menuLoadText:
 
 SECTION "SONG NAME GRAPHICS", ROMX
 song_names_vwf:
-	INCBIN "../assets/gfx/sprites/song_names.bin"
+	INCBIN "../assets/gfx/sprites/songNames.bin"
 
 /*
 menuLoadText:
