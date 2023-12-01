@@ -11,12 +11,6 @@ scrollText:
 .init:
 	ld hl, VARIABLE
 	add hl, bc
-	ld a, [hl] ;get variable
-	ld de, scrollText.lyc_worker
-	call spawnActorV
-	
-	ld hl, VARIABLE
-	add hl, bc
 	ldi a, [hl]
 	and $80
 	rrca
@@ -53,24 +47,8 @@ scrollText:
 	swapInRam shadow_oam
 	ld hl, shadow_oam
 	ld e, $28
-	call scrollText.adjustPos ;copy 40 sprites to shadow oam
+	call scrollText.adjustPos ;move 40 sprites in shadow oam
 	
-	swapInRam on_deck
-	ld a, [on_deck.active_buffer]
-	and $FE
-	ld h, a
-	ld l, $00 ;ld hl, on_deck
-	ld e, $28
-	call scrollText.adjustPos ;copy 40 sprites to backup oam
-	
-	ld a, [on_deck.active_buffer]
-	or $01
-	ld h, a
-	ld l, $00 ;ld hl, up_next
-	ld e, $14
-	call scrollText.adjustPos ;copy 20 sprites to backup oam #2
-	
-	restoreBank "ram"
 	restoreBank "ram"
 	ret
 	
