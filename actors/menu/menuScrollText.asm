@@ -49,17 +49,20 @@ scrollText:
 	ld e, $28
 	call scrollText.adjustPos ;move 40 sprites in shadow oam
 	
+	swapInRam on_deck
+	ld hl, on_deck
+	ld e, $0A
+	call scrollText.adjustPos ;move 10 sprites in the buffer
+	
+	restoreBank "ram"
 	restoreBank "ram"
 	ret
 	
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 	
-.scroll_amts:	
-	dw $7F7F, $0000, $0102, $0103, $0102, $0202, $0102, $0103, $0102, $0102, $0103, $0102, $0202, $0102, $0103, $0102 ;up
-	dw $7F7F, $0000, $FFFE, $FFFD, $FFFE, $FEFE, $FFFE, $FFFD, $FFFE, $FFFE, $FFFD, $FFFE, $FEFE, $FFFE, $FFFD, $FFFE ;down
-	
-.lyc_worker:
-	NEWACTOR scanlineBuddy, $00
+.scroll_amts:
+	dw $7F7F, $0000, $0408, $0205, $0204, $0203, $0103, $0102, $0102, $0101, $0101, $0001, $0101, $0001, $0000, $0000 ;up
+	dw $7F7F, $0000, $FCF8, $FEFB, $FEFC, $FEFD, $FFFD, $FFFE, $FFFE, $FFFF, $FFFF, $00FF, $FFFF, $00FF, $0000, $0000 ;down
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
