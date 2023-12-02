@@ -22,12 +22,14 @@ menuSprites:
 	sub $02
 	and $3F
 	or $80
+	ld b, $5A
 	jr menuSprites.summon
 	
 	.up:
 	;song ID refers to the song above us. need the song off the top of the screen instead.
 	dec a
 	and $3F
+	ld b, $7A
 	
 	.summon:
 	ld c, a
@@ -36,7 +38,15 @@ menuSprites:
 	
 	ld a, c
 	ld de, menuSprites.scroll_actor
-	jp spawnActorV
+	call spawnActorV
+	
+	ld a, c
+	ld de, menuSprites.scanline_actor
+	call spawnActorV
+	
+	ld a, b
+	ldh [$FF45], a
+	ret
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 	
@@ -45,3 +55,6 @@ menuSprites:
 
 .scroll_actor:
 	NEWACTOR scrollText, $FF
+
+.scanline_actor:
+	NEWACTOR scanlineBuddy, $FF
