@@ -17,7 +17,10 @@ scanlineBuddy:
 	rrca
 	rrca
 	rrca
-	ld [hl], a
+	ldi [hl], a ;convert variable into an index, $00 for up and $10 for down
+	
+	ldh a, [$FF45]
+	ld [hl], a ;save original scanline compare to local memory + 5
 	
 	updateActorMain scanlineBuddy.main
 
@@ -26,28 +29,30 @@ scanlineBuddy:
 .main:
 	ld hl, SCROLLINDEX
 	add hl, bc
-	inc [hl]
+	inc [hl] ;increment index before we read it
 	ld a, [hl]
-	and $0F
+	and $0F ;that way this check will last 15 frames instead of 16
 	jr nz, scanlineBuddy.continue
 		ld e, c
 		ld d, b
 		jp removeActor
 	
 	.continue:
-	ld e, [hl]
-	ld hl, scanlineBuddy.scanline_adjustments
-	ld d, $00
-	add hl, de
+	ldi a, [hl] ;reobtain index, hl now points to the base LYC
+	ld de, scanlineBuddy.scanline_adjustments
+	add e
+	ld e, a
+	ld a, d
+	adc $00
+	ld d, a ;de points to the offset
 	
-	di
-	ldh a, [$FF45]
+	ld a, [de]
 	add [hl]
-	ldh [$FF45], a
-	reti
+	ldh [$FF45], a ;apply offset and save it back
+	ret
 	
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 .scanline_adjustments:
-	db $7F, $00, $02, $03, $02, $02, $02, $03, $02, $02, $03, $02, $02, $02, $03, $02
-	db $7F, $00, $FE, $FD, $FE, $FE, $FE, $FD, $FE, $FE, $FD, $FE, $FE, $FE, $FD, $FE
+	db $7F, $00, $08, $0D, $11, $14, $17, $19, $1B, $1C, $1D, $1E, $1F, $20, $20, $20 ;up
+	db $7F, $00, $F8, $F3, $EF, $EC, $E9, $E7, $E5, $E4, $E3, $E2, $E1, $E0, $E0, $E0 ;down
