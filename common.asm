@@ -814,14 +814,7 @@ retriggerOAM: ;scanline interrupt that loads extra sprites.
 	push af
 	swapInRam on_deck ;save context
 	
-	ldh a, [$FF45]
-	xor $40
-	ldh [$FF45], a ;toggle the scanline to fire on between upper and lower halves of the screen
-		
-	ld a, [on_deck.active_buffer]
-	xor $01
-	ld [on_deck.active_buffer], a ;toggle the two buffers as well
-	
+	ld a, HIGH(on_deck)
 	call oam_routine
 	
 	restoreBank "ram" ;restore context
