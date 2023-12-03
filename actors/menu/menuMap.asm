@@ -98,9 +98,9 @@ menuMap:
 	ld b, h ;bc points to current entry
 	
 	and $80
-	ld de, $9048
+	ld de, $8844;$9048
 	jr nz, menuMap.down
-		ld de, $E0F0 ;d/e = number of pixels blow/right of the screen's top-left corner
+		ld de, $E8F4;$E0F0 ;d/e = number of pixels below/right of the screen's top-left corner
 	.down:
 	
 	;one row on the attr map is worth 32 tiles and tiles are worth 8 pixels, so calculate dest = 32*(ypos/8) + (xpos/8) = ypos*4 + xpos/8

@@ -17,10 +17,10 @@ fetchAttributes:
 	ld a, [hl] ;get scroll fraction
 	
 	;get x/y offsets based on scroll direction
-	ld bc, $E0B0  ;if scrolling up, the band starts 32 pixels above and 80 pixels left of current scroll window
+	ld bc, $E8B4;$E0B0  ;if scrolling up, the band starts 32 pixels above and 80 pixels left of current scroll window. this way after scrolling up 10 times, the bottom left corner will still have attributes.
 	bit 7, a
 	jr z, fetchAttributes.up
-		ld bc, $9008 ;if scrolling down, the band starts 32 pixels below the bottom left corner. this is 112 pixels below and 8 pixels right of the top left corner.
+		ld bc, $8804;$9008 ;if scrolling down, the band starts 32 pixels below the bottom left corner. this is 112 pixels below and 8 pixels right of the top left corner.
 	.up:
 	
 	and $3F ;remove direction bit
