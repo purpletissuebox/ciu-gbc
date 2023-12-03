@@ -814,7 +814,7 @@ retriggerOAM: ;scanline interrupt that loads extra sprites.
 	push af
 	swapInRam on_deck ;save context
 	
-	ld a, HIGH(on_deck)
+	ld a, [on_deck.active_buffer]
 	call oam_routine
 	
 	restoreBank "ram" ;restore context
