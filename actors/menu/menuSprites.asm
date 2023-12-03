@@ -8,10 +8,8 @@ SECTION "MENU OBJ WRAPPER", ROMX
 VARIABLE = $0003
 
 menuSprites:
-	ld e, c
-	ld d, b
-	call removeActor
-
+	push bc
+	
 	ld hl, VARIABLE
 	add hl, bc
 	ldi a, [hl]
@@ -22,14 +20,14 @@ menuSprites:
 	sub $02
 	and $3F
 	or $80
-	ld b, $5A
+	ld b, $7A
 	jr menuSprites.summon
 	
 	.up:
 	;song ID refers to the song above us. need the song off the top of the screen instead.
 	dec a
 	and $3F
-	ld b, $7A
+	ld b, $5A
 	
 	.summon:
 	ld c, a
@@ -44,9 +42,13 @@ menuSprites:
 	ld de, menuSprites.scanline_actor
 	call spawnActorV
 	
+	swapInRam on_deck
 	ld a, b
-	ldh [$FF45], a
-	ret
+	ld [on_deck.LYC_buffer], a
+	restoreBank "ram"
+	
+	pop de
+	jp removeActor
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 	
