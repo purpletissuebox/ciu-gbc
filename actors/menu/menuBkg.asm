@@ -57,7 +57,7 @@ menuBkg:
 	ld hl, TIMER
 	add hl, bc
 	dec [hl]
-		ret z
+		ret nz
 	
 	ld [hl], DELAYLONG ;reload timer with longer delay
 	ld hl, CHILDVAR
@@ -68,7 +68,7 @@ menuBkg:
 	ld c, ((menuBkg.high_priority_actors - menuBkg.low_priority_actors) >> 2)
 	
 	.spawnLoop:
-		ld de, menuBkg.low_priority_actors
+		ld de, menuBkg.low_priority_actors - 4
 		ld a, c
 		add a
 		add a
