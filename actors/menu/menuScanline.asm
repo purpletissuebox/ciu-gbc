@@ -19,8 +19,10 @@ scanlineBuddy:
 	rrca
 	ldi [hl], a ;convert variable into an index, $00 for up and $10 for down
 	
-	ldh a, [$FF45]
+	swapInRam on_deck
+	ld a, [on_deck.LYC_buffer]
 	ld [hl], a ;save original scanline compare to local memory + 5
+	restoreBank "ram"
 	
 	updateActorMain scanlineBuddy.main
 
@@ -46,9 +48,11 @@ scanlineBuddy:
 	adc $00
 	ld d, a ;de points to the offset
 	
+	swapInRam on_deck
 	ld a, [de]
 	add [hl]
-	ldh [$FF45], a ;apply offset and save it back
+	ld [on_deck.LYC_buffer], a ;apply offset and save it back
+	restoreBank "ram"
 	ret
 	
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
