@@ -131,6 +131,15 @@ SECTION "SCRATCHGFX", WRAMX[$D000], BANK[5]
 on_deck:
 	ds $A0
 	.end
+.padding:
+	ds $5E
+.LYC_buffer:
+	ds $01
+.active_buffer:
+	ds $01
+on_deck_2:
+	ds $A0
+	.end
 
 SECTION "GFX_DATA_6", WRAMX[$D000], BANK[6]
 UNION
