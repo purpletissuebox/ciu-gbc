@@ -129,6 +129,12 @@ menuInput:
 .wait:
 	ld hl, TIMER
 	add hl, bc
+	ld [hl], $0F
+	updateActorMain menuInput.wait2
+
+.wait2:
+	ld hl, TIMER
+	add hl, bc
 	dec [hl] ;wait for timer to expire
 		ret nz
 	
