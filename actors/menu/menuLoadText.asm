@@ -23,6 +23,7 @@ menuLoadText:
 	ld c, $05 ;c = loop counter
 	
 	ld de, sort_table
+	and $3F
 	add e
 	ld e, a
 	ld a, d
@@ -78,7 +79,7 @@ menuLoadText:
 		adc $00
 		ld h, a ;hl = pointer to song ID
 		
-		ld a, [hl] ;calculate src address = ((ID*320)%$4000) + $4000
+		ld a, [hl] ;calculate src address = ((ID*320)%$4000) + $4040
 		ld d, a
 		ld e, $00
 		rra
@@ -92,8 +93,11 @@ menuLoadText:
 		ld hl, TASKSRCLOW
 		add hl, bc
 		ld a, e
+		add $40
 		ldi [hl], a
 		ld a, d
+		adc $00
+		ld d, a
 		or $40
 		ldi [hl], a
 		ld a, BANK(song_names_vwf)
@@ -154,7 +158,11 @@ menuLoadText:
 	jr nz, menuLoadText.nextSong
 	
 	swapInRam on_deck
-	ld hl, on_deck
+	
+	ld hl, on_deck.active_buffer
+	ldi a, [hl]
+	xor $01
+	ld h, a
 	ld e, $0A
 	
 	.loop2:
