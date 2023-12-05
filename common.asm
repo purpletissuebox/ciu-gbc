@@ -890,6 +890,144 @@ spawnActorV: ;de = ptr to actor struct, a = variable
 	ret
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+itoa24: ;hl points to integer to convert, bc points to string to save it to
+;converts 24 bit integer to string.
+	ldi a, [hl]
+	ld e, a
+	ldi a, [hl]
+	ld l, [hl]
+	ld h, a ;ehl contains the integer now
+	
+	ld d, $FF ;d = digit
+	.n10000000:
+		inc d
+		
+		ld a, l
+		sub $80
+		ld l, a
+		
+		ld a, h
+		sbc $96
+		ld h, a
+		
+		ld a, e
+		sbc $98
+		ld e, a
+	jr c, itoa24.n10000000
+	ld a, d
+	ld [bc], a
+	inc bc
+	
+	ld d, $0A
+	.n1000000:
+		dec d
+		
+		ld a, l
+		add $40
+		ld l, a
+		
+		ld a, h
+		adc $42
+		ld h, a
+		
+		ld a, e
+		adc $0F
+		ld e, a
+	jr nc, itoa24.n1000000
+	ld a, d
+	ld [bc], a
+	inc bc
+	
+	ld d, $FF
+	.n100000:
+		inc d
+		
+		ld a, l
+		sub $A0
+		ld l, a
+		
+		ld a, h
+		sbc $86
+		ld h, a
+		
+		ld a, e
+		sbc $01
+		ld e, a
+	jr c, itoa24.n100000
+	ld a, d
+	ld [bc], a
+	inc bc
+	
+	ld d, $0A
+	.n10000:
+		dec d
+		
+		ld a, l
+		add $10
+		ld l, a
+		
+		ld a, h
+		adc $27
+		ld h, a
+		
+		ld a, e
+		adc $00
+		ld e, a
+	jr nc, itoa24.n10000
+	ld a, d
+	ld [bc], a
+	inc bc
+	
+	ld d, $FF
+	.n1000:
+		inc d
+		
+		ld a, l
+		sub $E8
+		ld l, a
+		
+		ld a, h
+		sbc $03
+		ld h, a
+	jr c, itoa24.n1000
+	ld a, d
+	ld [bc], a
+	inc bc
+	
+	ld d, $0A
+	.n100:
+		dec d
+		
+		ld a, l
+		add $64
+		ld l, a
+		
+		ld a, h
+		adc $00
+		ld h, a
+	jr nc, itoa24.n100
+	ld a, d
+	ld [bc], a
+	inc bc
+	
+	ld d, $FF
+	.n10:
+		inc d
+		
+		ld a, l
+		sub $0A
+		ld l, a
+	jr c, itoa24.n10
+	ld a, d
+	ld [bc], a
+	inc bc
+	ld a, e
+	ld [bc], a
+	
+	ret
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 	
 dummy_actor:
 	ld e, c
