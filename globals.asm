@@ -26,6 +26,8 @@ save_scores:
 	ds $300
 last_played_song:
 	ds $01
+last_played_difficulty:
+	ds $01
 character:
 	ds $01
 note_speed:
@@ -40,9 +42,11 @@ sort_method:
 	ds $EA
 ENDU
 
-score:
+current_score:
 	ds $03
 current_song:
+	ds $01
+current_difficulty:
 	ds $01
 	
 sort_table:
@@ -177,11 +181,6 @@ shadow_winloc:
 	ds $02 ;win scroll y,x
 menu_bkg_index:
 	ds $06
-	.end
-menu_oam_head:
-	ds $01
-menu_oam_index:
-	ds $05
 	.end
 
 SECTION "BKG_DATA_7", WRAMX[$D000], BANK[7]
