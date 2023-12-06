@@ -6,6 +6,7 @@ SECTION "MENU INPUT READER", ROMX
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 CURRENTSONG = $0003
+CURRENTDIFF = $0004
 TIMER = $000F
 
 menuInput:
@@ -15,6 +16,8 @@ menuInput:
 	ld hl, CURRENTSONG
 	add hl, bc
 	ld a, [last_played_song] ;get the song the user just played
+	ldi [hl], a
+	ld a, [last_played_difficulty]
 	ld [hl], a
 	restoreBank "ram"
 	ret
@@ -63,10 +66,17 @@ menuInput:
 	ld hl, CURRENTSONG
 	add hl, bc
 	dec [hl] ;we now have the previous song selected
-	ld a, [hl]
+	ldi a, [hl]
 	and $3F
-	
 	ldh [scratch_byte], a
+	
+	;rlca
+	;rlca
+	;or [hl]
+	;ld de, menuInput.hud_actor
+	;call spawnActorV
+	
+	ldh a, [scratch_byte]
 	ld de, menuInput.bkg_actor
 	call spawnActorV
 	
@@ -148,3 +158,6 @@ menuInput:
 
 .sprite_actor:
 	NEWACTOR menuSprites, $FF
+
+.hud_actor:
+	;NEWACTOR menuHUD, $FF
