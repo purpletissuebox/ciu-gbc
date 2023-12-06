@@ -16,6 +16,7 @@ menuLoadText:
 	ld hl, VARIABLE
 	add hl, bc
 	ld a, [hl] ;variable = external ID for the first song to render
+	ldh [scratch_byte], a
 	
 	ld hl, SONGLIST
 	add hl, bc
@@ -53,6 +54,23 @@ menuLoadText:
 	.up:
 	
 	call menuLoadText.loadSongNames ;copy sprites to shadow oam
+	
+	ldh a, [scratch_byte]
+	and $80
+	ld hl, shadow_oam + $0053
+	jr nz, menuLoadText.down
+		ld hl, shadow_oam + $002B
+	.down:
+	
+	ld de, $0004
+	ld bc, $0A09 ;de = distance between sprites, b = loop counter, c = palette to write
+	
+	.paletteLoop:
+		ld [hl], c
+		add hl, de
+		dec b
+	jr nz, menuLoadText.paletteLoop ;replace the soon-to-be-selected song's palette.
+	
 	restoreBank "ram"
 	restoreBank "ram"
 	pop bc
