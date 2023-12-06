@@ -28,8 +28,33 @@ handleSort:
 	jr nz, handleSort.loop
 	
 	restoreBank "ram"
-	pop de
-	jp removeActor
+	pop bc
+	updateActorMain handleSort.flicker
+	ret
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+.flicker:
+	ld hl, $000F
+	add hl, bc
+	inc [hl]
+	ld a, [hl]
+	and $03
+		ret nz
+	
+	ld a, [hl]
+	and $04
+	ld de, $0B98
+	jr z, handleSort.yellow
+		ld de, $7423
+	.yellow:
+	swapInRam shadow_palettes
+	ld hl, shadow_palettes + 8*4*2 + 1*4*2 + 3*2
+	ld a, e
+	ldi [hl], a
+	ld [hl], d
+	restoreBank "ram"
+	ret
 
 .table:
 	INCBIN "../assets/code/sortMethods.bin"
