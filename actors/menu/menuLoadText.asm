@@ -82,7 +82,7 @@ menuLoadText:
 	ldi [hl], a
 	ld a, HIGH((sprite_tiles1 - $0140) | BANK(sprite_tiles1))
 	ldi [hl], a
-	ld [hl], $0F ;16 tiles
+	ld [hl], $13 ;20 tiles
 	
 	.gfxLoop:
 		ld hl, NUMTASKS ;we will use the number of completed tasks as a loop counter. the background actors are staggered so they shouldnt clog up the gfx task buffer
