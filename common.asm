@@ -691,7 +691,7 @@ ENDR
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-bcopy_banked: ;b = bank, c = size >> 4 (number of tiles), de = src, hl = dest
+bcopyBanked: ;b = bank, c = size >> 4 (number of tiles), de = src, hl = dest
 ;copies c tiles from de to hl, using rom bank b.
 
 	ldh a, [rom_bank]

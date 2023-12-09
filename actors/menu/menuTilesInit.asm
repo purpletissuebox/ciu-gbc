@@ -111,7 +111,7 @@ menuTilesInit:
 	ld hl, shadow_map
 	ld de, menu_map
 	ld bc, (BANK(menu_map) << 8) | ((shadow_map.end - shadow_map) >> 4)
-	call bcopy_banked ;we copied the map to vram, but we did not copy to global memory yet
+	call bcopyBanked ;we copied the map to vram, but we did not copy to global memory yet
 	
 	restoreBank "ram"
 	restoreBank "ram"
