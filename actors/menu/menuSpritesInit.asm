@@ -14,7 +14,6 @@ menuSpritesInit:
 	or $80
 	ld de, menuSpritesInit.loader_actor
 	call spawnActorV ;load the starting tiles
-	restoreBank "ram"
 	
 	swapInRam on_deck
 	ld e, $28
@@ -53,6 +52,7 @@ menuSpritesInit:
 	ld l, $FF
 	set 1, [hl] ;enable future scanline interrupts
 	
+	restoreBank "ram"	
 	restoreBank "ram"
 	ld e, c
 	ld d, b
