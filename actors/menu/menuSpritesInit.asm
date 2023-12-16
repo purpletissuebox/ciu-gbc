@@ -5,15 +5,75 @@ SECTION "MENU SPRITES", ROMX
 ;copies strings to oam and initializes scanline interrupts.
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+SONGIDS = $0010
+
 menuSpritesInit:
 .loadSprites:
+	ld a, c
+	ldh [scratch_byte], a
 	swapInRam save_file
 	ld a, [last_played_song]
-	dec a
-	and $3F
-	or $80
-	ld de, menuSpritesInit.loader_actor
-	call spawnActorV ;load the starting tiles
+	ld l, a
+	swapInRam sort_table
+	ld a, l
+	
+	ld hl, SONGIDS
+	add hl, bc
+	ld de, sort_table
+	add e
+	ld e, a
+	ld a, d
+	adc $00
+	ld d, a
+	
+	ld c, $05
+	.getIDs:
+		ld a, [de]
+		inc de
+		ldi [hl], a
+		inc hl
+		ld a, e
+		sub LOW(sort_table.end)
+		jr nz, menuSpritesInit.noWrap
+			ld de, sort_table
+		.noWrap
+		ld a, l
+		dec c
+	jr nz, menuSpritesInit.getIDs
+	
+	ldh a, [scratch_byte]
+	ld c, a
+	ld hl, SONGIDS
+	add hl, bc
+	ld c, $05
+	.calculateSrcs:
+		ld d, [hl]
+		ld e, d
+		ld a, d
+		srl e
+		rra
+		srl e
+		rra
+		add $40
+		ldi [hl], a
+		ld a, d
+		adc e
+		ldi [hl], a
+		ld a, l
+		dec c
+	jr nz, menuSpritesInit.calculateSrcs
+	
+	ldh a, [scratch_byte]
+	ld c, a
+	updateActorMain menuSpritesInit.loadGfx
+	restoreBank "ram"
+	restoreBank "ram"
+	ret
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+.loadGfx:
+	ret
 	
 	swapInRam on_deck
 	ld e, $28
