@@ -8,7 +8,10 @@ VARIABLE = $0003
 SCROLLINDEX = $0004
 
 scrollText:
-.init:
+.init:	
+	ld de, scrollText.confirm
+	call spawnActor
+	
 	ld hl, VARIABLE
 	add hl, bc
 	ldi a, [hl]
@@ -59,9 +62,7 @@ scrollText:
 	
 	restoreBank "ram"
 	restoreBank "ram"
-	
-	ld de, scrollText.confirm
-	jp spawnActor
+
 	ret
 	
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -92,7 +93,10 @@ ret
 
 SECTION "SCANLINE BUFFER SWAP", ROMX
 
+TIMER = $000F
+
 swapBuffers:
+.first:
 	ldh a, [$FF44]
 	cp $7C
 		jr nc, swapBuffers.ready
@@ -111,6 +115,11 @@ swapBuffers:
 		jp removeActor
 	
 	.ready:
+	updateActorMain swapBuffers.subsequent
+	ld hl, TIMER
+	add hl, bc
+	ld [hl], $0F
+	
 	swapInRam on_deck
 	ld de, on_deck.active_buffer
 	ld a, [de]
@@ -131,4 +140,38 @@ swapBuffers:
 	ldh [$FF45], a
 	
 	restoreBank "ram"
-	jp removeActor
+	ret
+
+.subsequent:
+	ldh a, [$FF44]
+	cp $7C
+		jr nc, swapBuffers.ready2
+	
+		ld hl, ACTORSIZE - 2
+		add hl, bc
+		ldi a, [hl]
+		or [hl]
+	jr z, swapBuffers.subsequent
+	
+		ld e, c
+		ld d, b
+		call spawnActor
+		ld e, c
+		ld d, b
+		jp removeActor
+	
+	.ready2:
+	ld hl, TIMER
+	add hl, bc
+	dec [hl]
+	jr nz, swapBuffers.doTheSwap
+		ld e, c
+		ld d, b
+		jp removeActor
+	.doTheSwap:
+	swapInRam on_deck
+	ld a, [on_deck.active_buffer]
+	xor $01
+	ld [on_deck.active_buffer], a
+	restoreBank "ram"
+	ret
