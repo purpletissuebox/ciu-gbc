@@ -207,4 +207,4 @@ menuLoadText:
 
 SECTION "SONG NAME GRAPHICS", ROMX
 ;song_names_vwf:
-	BIGFILE song_names_vwf, $5000, assets/gfx/sprites/songNames.bin
+	BIGFILE song_names_vwf, $8000, assets/gfx/sprites/songNames.bin
