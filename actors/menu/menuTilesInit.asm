@@ -58,20 +58,20 @@ SECTION "MENUINIT+MENUATTR", ROMX
 ;     +-----------------------------------------------+-----------------------------------------------+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-TASKDEST = $0007
-TASKSRC = $0004
-VRAMDESTS = $000B
 VARIABLE = $0003
+TASKSRC = $0004
+TASKDEST = $0007
 NUMTILES = $0009
+NUMTASKS = $000A
+VRAMDESTS = $000B
 NEXTCHUNKBANK = $0017
 NEXTCHUNKHI = $0018
 CURRENTCHUNK = $0019
 
 menuTilesInit:
 .initialMap:
-	ld de, menuTilesInit.map
-	call loadGraphicsTask
-	call submitGraphicsTask ;based on the scroll fraction, the tiles themselves will change but not the tilemap. so we submit a pre-calculated one.
+	ld de, menuTilesInit.map ;based on the scroll fraction, the tiles themselves will change but not the tilemap. so we submit a pre-calculated one.
+	call loadGraphicsTask ;it will be pushed to the queue later
 	
 	updateActorMain menuTilesInit.initialAttr
 	
@@ -120,6 +120,14 @@ menuTilesInit:
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 	
 .initialAttr:
+	call submitGraphicsTask ;try to submit the map task.
+	ld hl, NUMTASKS
+	add hl, bc
+	ld a, [hl]
+	dec a
+		ret nz ;repeatedly attempt to until it goes through
+	ld [hl], a
+	
 	push bc
 	swapInRam shadow_attr
 	;attributes are stored as a big array. each entry is 64 bytes, and contains attributes for the 32x2 strip of tiles at that scroll fraction.
@@ -195,13 +203,22 @@ menuTilesInit:
 	pop bc
 	
 	ld de, menuTilesInit.attr
-	call loadGraphicsTask
-	call submitGraphicsTask ;submit all the attributes
+	call loadGraphicsTask ;once again, the attributes themselves are different but the memory region is hardcoded.
 	
-	updateActorMain menuTilesInit.initialTiles
+	updateActorMain menuTilesInit.initialTilesWrapper
 	ret
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+.initialTilesWrapper:
+	call submitGraphicsTask ;based on the scroll fraction, the tiles themselves will change but not the tilemap. so we submit a pre-calculated one.
+	ld hl, NUMTASKS
+	add hl, bc
+	ld a, [hl]
+	dec a
+		ret nz ;attempt to submit until it goes through
+	ld [hl], a
+	updateActorMain menuTilesInit.initialTiles
 
 .initialTiles:
 ;for this function we can't submit all the tiles at once. instead process one step at a time.
@@ -240,9 +257,9 @@ menuTilesInit:
 		ld h, $00
 		add hl, de
 		ld a, [hl] ;get current step for this region
-		and a
-			jr z, menuTilesInit.break ;if it's zero, then all the following steps are also zero so we can skip them
-		dec [hl]
+		dec a
+		and $80
+			jr nz, menuTilesInit.break ;if it's less than 1, then all the following steps are also less than 1 so we can skip them
 		
 		ldh a, [scratch_byte]
 		ld de, menuTilesInit.chunk_sizes
@@ -310,10 +327,25 @@ menuTilesInit:
 	.break:
 	restoreBank "ram"
 	
+	ld hl, NUMTASKS
+	add hl, bc
+	ldh a, [scratch_byte]
+	cp [hl]
+		ret nz ;if the number of chunks processesed does not match the number of successful gfx tasks, then one of the tasks failed and we need to retry.
+	
+	ld hl, menu_bkg_index
+	ld e, $06
+	.fixIndices:
+		ld a, [hl]
+		dec a
+		ldi [hl], a
+		dec e
+	jr nz, menuTilesInit.fixIndices
+	
 	ld hl, CURRENTCHUNK
 	add hl, bc
 	dec [hl]
-	ret nz ;return if we have not yet done the entire screen
+		ret nz ;return if we have not yet done the entire screen
 	
 	updateActorMain menuTilesInit.cleanup ;else advance with the workflow
 	ret
@@ -347,19 +379,11 @@ menuTilesInit:
 	jr nz, menuTilesInit.restoreBkgArray
 	
 	restoreBank "ram"
-	
-	ld de, menuTilesInit.get_colors
-	call spawnActor
-	call spawnActor
 	ld e, c
 	ld d, b
 	jp removeActor
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-.get_colors:
-	NEWACTOR setColors, $85
-	NEWACTOR setColorsOBJ, $83
 	
 .chunk_positions:
 	dw menu_bands0 | BANK(menu_bands0),   menu_bands1 | BANK(menu_bands1),   menu_G_chunks | BANK(menu_G_chunks),   menu_O_chunks | BANK(menu_O_chunks),   menu_Y_chunks | BANK(menu_Y_chunks),   menu_P_chunks | BANK(menu_P_chunks)
