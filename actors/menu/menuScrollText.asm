@@ -52,17 +52,14 @@ scrollText:
 	ld e, $28
 	call scrollText.adjustPos ;move 40 sprites in shadow oam
 	
-	swapInRam active_oam_buffer
-	ld hl, active_oam_buffer
-	ldi a, [hl]
+	ld a, [active_oam_buffer]
 	xor $01
 	ld h, a
+	ld l, LOW(on_deck)
 	ld e, $0A
 	call scrollText.adjustPos ;move 10 sprites in the buffer
 	
 	restoreBank "ram"
-	restoreBank "ram"
-
 	ret
 	
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

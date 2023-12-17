@@ -363,9 +363,7 @@ menuTilesInit:
 	ldi [hl], a
 	ld a, $07
 	ldi [hl], a
-	restoreBank "ram"
-	
-	swapInRam menu_bkg_index
+
 	ld hl, menu_bkg_index
 	ld de, menuTilesInit.num_chunks
 	

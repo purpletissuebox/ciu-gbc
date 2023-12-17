@@ -16,9 +16,6 @@ menuSpritesInit:
 	ldh [scratch_byte], a
 	swapInRam save_file
 	ld a, [last_played_song]
-	ld l, a
-	swapInRam sort_table
-	ld a, l
 	
 	ld hl, SONGIDS
 	add hl, bc
@@ -79,7 +76,6 @@ menuSpritesInit:
 	ld [hl], $13
 	
 	updateActorMain menuSpritesInit.loadGfx
-	restoreBank "ram"
 	restoreBank "ram"
 	ret
 
