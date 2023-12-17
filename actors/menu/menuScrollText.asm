@@ -52,8 +52,8 @@ scrollText:
 	ld e, $28
 	call scrollText.adjustPos ;move 40 sprites in shadow oam
 	
-	swapInRam on_deck
-	ld hl, on_deck.active_buffer
+	swapInRam active_oam_buffer
+	ld hl, active_oam_buffer
 	ldi a, [hl]
 	xor $01
 	ld h, a
@@ -120,8 +120,8 @@ swapBuffers:
 	add hl, bc
 	ld [hl], $0F
 	
-	swapInRam on_deck
-	ld de, on_deck.active_buffer
+	swapInRam active_oam_buffer
+	ld de, active_oam_buffer
 	ld a, [de]
 	ld h, a
 	xor $01
@@ -136,7 +136,7 @@ swapBuffers:
 	rst $10
 	pop de
 	
-	ld a, [on_deck.LYC_buffer]
+	ld a, [LYC_buffer]
 	ldh [$FF45], a
 	
 	restoreBank "ram"
@@ -169,9 +169,9 @@ swapBuffers:
 		ld d, b
 		jp removeActor
 	.doTheSwap:
-	swapInRam on_deck
-	ld a, [on_deck.active_buffer]
+	swapInRam active_oam_buffer
+	ld a, [active_oam_buffer]
 	xor $01
-	ld [on_deck.active_buffer], a
+	ld [active_oam_buffer], a
 	restoreBank "ram"
 	ret

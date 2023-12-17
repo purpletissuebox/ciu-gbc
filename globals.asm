@@ -131,30 +131,30 @@ SECTION "DATA_3", WRAMX[$D000], BANK[3]
 
 SECTION "DATA_4", WRAMX[$D000], BANK[4]
 
-SECTION "SCRATCHGFX", WRAMX[$D000], BANK[5]
-on_deck:
-	ds $A0
-	.end
-.padding:
-	ds $5E
-.LYC_buffer:
-	ds $01
-.active_buffer:
-	ds $01
-on_deck_2:
-	ds $A0
-	.end
+SECTION "DATA_5", WRAMX[$D000], BANK[5]
+
 
 SECTION "GFX_DATA_6", WRAMX[$D000], BANK[6]
 UNION
 shadow_tiles:
-	ds $E00 ;backup tiles that can be manipulated out of vblank
+	ds $C00 ;backup tiles that can be manipulated out of vblank
 	.end
 NEXTU
 animated_tiles:
 	ds $40
 	.end
 ENDU
+
+on_deck:
+	ds $A0
+	.end
+.padding:
+	ds $60
+on_deck_2:
+	ds $A0
+	.end
+.padding:
+	ds $60
 
 shadow_oam:
 	ds $A0 ;backup satb table that can be manipulated out of vblank
@@ -182,6 +182,14 @@ shadow_winloc:
 menu_bkg_index:
 	ds $06
 	.end
+menu_text_head:
+	ds $01
+active_oam_buffer:
+	ds $01
+LYC_buffer:
+	ds $01
+.padding:
+	ds $49
 
 SECTION "BKG_DATA_7", WRAMX[$D000], BANK[7]
 shadow_map:

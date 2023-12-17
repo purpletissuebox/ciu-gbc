@@ -812,9 +812,9 @@ changeScene: ;a = scene ID to change to
 
 retriggerOAM: ;scanline interrupt that loads extra sprites.
 	push af
-	swapInRam on_deck ;save context
+	swapInRam active_oam_buffer ;save context
 	
-	ld a, [on_deck.active_buffer]
+	ld a, [active_oam_buffer]
 	call oam_routine
 	
 	restoreBank "ram" ;restore context

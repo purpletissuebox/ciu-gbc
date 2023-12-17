@@ -42,9 +42,9 @@ menuSprites:
 	ld de, menuSprites.scanline_actor
 	call spawnActorV
 	
-	swapInRam on_deck
+	swapInRam LYC_buffer
 	ld a, b
-	ld [on_deck.LYC_buffer], a
+	ld [LYC_buffer], a
 	restoreBank "ram"
 	
 	pop de
