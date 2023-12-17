@@ -5,6 +5,9 @@ SECTION "MENU SPRITES", ROMX
 ;copies strings to oam and initializes scanline interrupts.
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+TASKSRC = $0004
+TASKDEST = $0007
+NUMTASKS = $000A
 SONGIDS = $0010
 
 menuSpritesInit:
@@ -20,6 +23,8 @@ menuSpritesInit:
 	ld hl, SONGIDS
 	add hl, bc
 	ld de, sort_table
+	dec a
+	and $3F
 	add e
 	ld e, a
 	ld a, d
@@ -59,12 +64,20 @@ menuSpritesInit:
 		ld a, d
 		adc e
 		ldi [hl], a
-		ld a, l
 		dec c
 	jr nz, menuSpritesInit.calculateSrcs
 	
 	ldh a, [scratch_byte]
 	ld c, a
+	
+	ld hl, TASKDEST
+	add hl, bc
+	ld a, LOW(sprite_tiles1) | BANK(sprite_tiles1)
+	ldi [hl], a
+	ld a, HIGH(sprite_tiles1)
+	ldi [hl], a
+	ld [hl], $13
+	
 	updateActorMain menuSpritesInit.loadGfx
 	restoreBank "ram"
 	restoreBank "ram"
@@ -73,8 +86,112 @@ menuSpritesInit:
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 .loadGfx:
-	ret
+	ld hl, NUMTASKS
+	add hl, bc
+	ld a, [hl]
+	cp $05
+	jr nz, menuSpritesInit.submitNext
+		updateActorMain menuSpritesInit.fixOAM
+		ret
+	.submitNext:
+	ldh [scratch_byte], a
+	add a
+	add c
+	ld e, a
+	ld a, b
+	adc $00
+	ld d, a
+
+	ld hl, TASKSRC
+	add hl, bc
+	ld a, [de]
+	inc de
+	ldi [hl], a
+	ld a, [de]
+	ld d, a
+	or $40
+	ldi [hl], a
+	ld a, BANK(song_names_vwf)
+	bit 6, d
+	jr z, menuSpritesInit.smallBank
+		inc a
+	.smallBank:
+	ldi [hl], a
 	
+	call submitGraphicsTask
+	
+	ld hl, NUMTASKS
+	add hl, bc
+	ldh a, [scratch_byte]
+	ld e, a
+	ldd a, [hl]
+	cp e
+		ret z
+	
+	dec hl
+	dec hl
+	ld a, [hl]
+	add $40
+	ldi [hl], a
+	ld a, [hl]
+	adc $01
+	ldi [hl], a
+	ret
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+.fixOAM:
+	swapInRam shadow_oam
+	ld hl, shadow_oam
+	ld bc, $1810
+	ld d, $00
+	
+	.nextSong:
+		ld e, $0A
+		
+		.nextLetter:
+			ld a, b
+			ldi [hl], a
+			ld a, c
+			ldi [hl], a
+			add $08
+			ld c, a
+			ld a, d
+			ldi [hl], a
+			add $02
+			ld d, a
+			ld a, $08
+			ldi [hl], a
+			dec e
+		jr nz, menuSpritesInit.nextLetter
+		
+		ld a, b
+		add $20
+		ld b, a
+		rrca
+		add $04
+		ld c, a
+		
+		ld a, d
+		cp $50
+	jr nz, menuSpritesInit.nextSong
+	
+	ld a, $0A
+	ld de, $0004
+	ld hl, shadow_oam + $2B
+	.paletteLoop:
+		inc [hl]
+		add hl, bc
+		dec a
+	jr nz, menuSpritesInit.paletteLoop
+	
+	restoreBank "ram"
+	updateActorMain menuSpritesInit.cleanup
+	ret
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+.cleanup:	
 	swapInRam on_deck
 	ld e, $28
 	ld hl, on_deck
@@ -82,7 +199,7 @@ menuSpritesInit:
 	.loop:
 		ldi [hl], a ;y position
 		ldi [hl], a ;x position
-		inc hl
+		ldi [hl], a ;tile ID
 		ldi [hl], a ;palette
 		dec e
 	jr nz, menuSpritesInit.loop
@@ -98,27 +215,23 @@ menuSpritesInit:
 		dec e
 	jr nz, menuSpritesInit.loop2
 	
-	ld a, $D0
-	ld [on_deck.active_buffer], a
+	ld a, HIGH(active_oam_buffer)
+	ld [active_oam_buffer], a
+	ld a, $04
+	ld [menu_text_head], a
 
 	ld hl, $FF40
 	set 2, [hl] ;change sprites to 8x16 mode
 	ld l, $45
 	ld a, $7A
 	ld [hl], a ;set LYC register
-	ld [on_deck.LYC_buffer], a ;and its buffer
+	ld [LYC_buffer], a ;and its buffer
 	ld l, $0F
 	res 1, [hl] ;stop the scanline interrupt from running immediately if it was already queued
 	ld l, $FF
 	set 1, [hl] ;enable future scanline interrupts
 	
-	restoreBank "ram"	
 	restoreBank "ram"
 	ld e, c
 	ld d, b
 	jp removeActor
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-.loader_actor:
-	NEWACTOR menuLoadText, $00
