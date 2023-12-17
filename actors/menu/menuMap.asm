@@ -191,13 +191,11 @@ menuMap:
 	add hl, bc
 	ld a, [hl]
 	and a
-	jr z, menuMap.tryAgain
-		ld e, c
-		ld d, b
-		call removeActor
-	.tryAgain:
-	ret
-
+		ret z
+	ld e, c
+	ld d, b
+	jp removeActor
+	
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 .chunk_differences_up:
