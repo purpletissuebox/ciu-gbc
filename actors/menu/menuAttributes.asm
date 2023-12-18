@@ -84,20 +84,18 @@ fetchAttributes:
 	pop bc
 	
 	ld de, menuTilesInit.attr
-	call loadGraphicsTask
 	updateActorMain fetchAttributes.submit ;just in case other actors clog up the queue, attempt to resubmit until our new map goes through
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 .submit:
+	call submitGraphicsTask
 	ld hl, NUMTASKS
 	add hl, bc
 	ld a, [hl]
-	and a
-	jr nz, fetchAttributes.done
-		jp submitGraphicsTask
+	dec a
+	ret nz
 	
-	.done:
-		ld e, c
-		ld d, b
-		jp removeActor
+	ld e, c
+	ld d, b
+	jp removeActor
