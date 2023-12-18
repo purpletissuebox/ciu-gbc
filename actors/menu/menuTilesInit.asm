@@ -224,18 +224,9 @@ menuTilesInit:
 ;for this function we can't submit all the tiles at once. instead process one step at a time.
 	ld hl, NEXTCHUNKHI
 	add hl, bc
-	ld d, [hl]
-	ld a, d ;get high byte of source address
-	add $04 ;next frame we will proces the next step, which is $400 bytes later
-	cp $80 ;check for overflow. the carry will be set if we did NOT overflow
-	res 7, a
-	set 6, a ;wrap the pointer around into the $4000-7FFF range
-	ldd [hl], a
-	
+	ldd a, [hl]
+	ld d, a ;get high byte of source address
 	ld e, [hl]
-	ld a, e ;get bank number
-	sbc $FF ;if we overflowed, the carry will not be set and we will increment the bank number. else carry is set and nothing happens.
-	ld [hl], a ;we will not handle the bank wrapping here but defer that to next frame when it actually gets used.
 	
 	ld hl, TASKSRC+2
 	add hl, bc
@@ -249,9 +240,9 @@ menuTilesInit:
 
 	swapInRam menu_bkg_index
 	xor a
+	ldh [scratch_byte], a
 	
 	.loop:
-		ldh [scratch_byte], a ;loop counter
 		ld de, menu_bkg_index
 		ld l, a
 		ld h, $00
@@ -285,14 +276,9 @@ menuTilesInit:
 		adc $00
 		ld h, a ;hl points to vram destination for current chunk
 		
-		ld a, [de] ;simultaneously add (new dest) = (prev dest) + (size) as well as load de = (prev dest)
-		add [hl]
-		ld e, [hl]
-		ldi [hl], a
-		ld a, $00
-		adc [hl]
+		ldi a, [hl]
+		ld e, a
 		ld d, [hl]
-		ldi [hl], a
 		
 		ld hl, TASKDEST
 		add hl, bc
@@ -321,33 +307,61 @@ menuTilesInit:
 		
 		ldh a, [scratch_byte]
 		inc a
+		ldh [scratch_byte], a
 		cp $06
 	jr nz, menuTilesInit.loop ;loop for each chunk
 	
-	.break:
-	restoreBank "ram"
-	
+	.break:	
 	ld hl, NUMTASKS
 	add hl, bc
 	ldh a, [scratch_byte]
 	cp [hl]
-		ret nz ;if the number of chunks processesed does not match the number of successful gfx tasks, then one of the tasks failed and we need to retry.
+	ld [hl], $00
+		jr nz, menuTilesInit.exit ;if the number of chunks processesed does not match the number of successful gfx tasks, then one of the tasks failed and we need to retry.
 	
 	ld hl, menu_bkg_index
 	ld e, $06
 	.fixIndices:
-		ld a, [hl]
-		dec a
-		ldi [hl], a
+		dec [hl]
+		inc hl
 		dec e
 	jr nz, menuTilesInit.fixIndices
+	
+	ld hl, VRAMDESTS
+	add hl, bc
+	ld de, menuTilesInit.chunk_sizes
+	.fixDests:
+		ld a, [de]
+		inc de
+		add [hl]
+		ldi [hl], a
+		ld a, [hl]
+		adc $00
+		ldi [hl], a
+		ld a, e
+		sub LOW(menuTilesInit.end2)
+	jr nz, menuTilesInit.fixDests		
+	
+	ld hl, NEXTCHUNKHI
+	add hl, bc
+	ld a, [hl]
+	add $04
+	cp $80
+	res 7, a
+	set 6, a
+	ldd [hl], a
+	ld a, [hl]
+	sbc $FF
+	ld [hl], a
 	
 	ld hl, CURRENTCHUNK
 	add hl, bc
 	dec [hl]
-		ret nz ;return if we have not yet done the entire screen
+		jr nz, menuTilesInit.exit ;return if we have not yet done the entire screen
 	
 	updateActorMain menuTilesInit.cleanup ;else advance with the workflow
+	.exit:
+	restoreBank "ram"
 	ret
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -376,13 +390,21 @@ menuTilesInit:
 		sub e
 	jr nz, menuTilesInit.restoreBkgArray
 	
+	ld de, menuTilesInit.color_actor
+	call spawnActor
+	call spawnActor
+	
 	restoreBank "ram"
 	ld e, c
 	ld d, b
 	jp removeActor
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-	
+
+.color_actor:
+	NEWACTOR setColors, $85
+	NEWACTOR setColorsOBJ, $83
+
 .chunk_positions:
 	dw menu_bands0 | BANK(menu_bands0),   menu_bands1 | BANK(menu_bands1),   menu_G_chunks | BANK(menu_G_chunks),   menu_O_chunks | BANK(menu_O_chunks),   menu_Y_chunks | BANK(menu_Y_chunks),   menu_P_chunks | BANK(menu_P_chunks)
 	.end
