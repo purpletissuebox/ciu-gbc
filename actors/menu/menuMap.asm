@@ -7,6 +7,7 @@ SECTION "MENU MAP", ROMX
 
 VARIABLE = $0003
 FIRSTENTRY = $0004
+NUMTASKS = $000A
 
 menuMap:
 .init:
@@ -176,7 +177,7 @@ menuMap:
 	restoreBank "ram"	
 	pop bc
 	
-	ld hl, $000A
+	ld hl, NUMTASKS
 	add hl, bc
 	ld [hl], $00 ;shadow map is updated now, so throw this away.
 	ld de, menuMap.task
@@ -187,11 +188,12 @@ menuMap:
 	
 .submit:
 	call submitGraphicsTask
-	ld hl, $000A
+	ld hl, NUMTASKS
 	add hl, bc
 	ld a, [hl]
-	and a
-		ret z
+	dec a
+		ret nz
+	
 	ld e, c
 	ld d, b
 	jp removeActor
