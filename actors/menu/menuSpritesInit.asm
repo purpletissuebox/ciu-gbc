@@ -38,8 +38,7 @@ menuSpritesInit:
 		sub LOW(sort_table.end)
 		jr nz, menuSpritesInit.noWrap
 			ld de, sort_table
-		.noWrap
-		ld a, l
+		.noWrap:
 		dec c
 	jr nz, menuSpritesInit.getIDs
 	
@@ -51,7 +50,7 @@ menuSpritesInit:
 	.calculateSrcs:
 		ld d, [hl]
 		ld e, d
-		ld a, d
+		xor a
 		srl e
 		rra
 		srl e
@@ -92,6 +91,7 @@ menuSpritesInit:
 	.submitNext:
 	ldh [scratch_byte], a
 	add a
+	add LOW(SONGIDS)
 	add c
 	ld e, a
 	ld a, b
@@ -137,6 +137,7 @@ menuSpritesInit:
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 .fixOAM:
+	push bc
 	swapInRam shadow_oam
 	ld hl, shadow_oam
 	ld bc, $1810
@@ -154,8 +155,8 @@ menuSpritesInit:
 			ld c, a
 			ld a, d
 			ldi [hl], a
-			add $02
-			ld d, a
+			inc d
+			inc d
 			ld a, $08
 			ldi [hl], a
 			dec e
@@ -177,11 +178,12 @@ menuSpritesInit:
 	ld hl, shadow_oam + $2B
 	.paletteLoop:
 		inc [hl]
-		add hl, bc
+		add hl, de
 		dec a
 	jr nz, menuSpritesInit.paletteLoop
 	
 	restoreBank "ram"
+	pop bc
 	updateActorMain menuSpritesInit.cleanup
 	ret
 
@@ -202,16 +204,15 @@ menuSpritesInit:
 	
 	ld e, $28
 	ld hl, on_deck_2
-	xor a
 	.loop2:
 		ldi [hl], a ;y position
 		ldi [hl], a ;x position
-		inc hl
+		ldi [hl], a ;tile ID
 		ldi [hl], a ;palette
 		dec e
 	jr nz, menuSpritesInit.loop2
 	
-	ld a, HIGH(active_oam_buffer)
+	ld a, HIGH(on_deck)
 	ld [active_oam_buffer], a
 	ld a, $04
 	ld [menu_text_head], a
