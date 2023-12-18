@@ -15,175 +15,160 @@ menuLoadText:
 	swapInRam sort_table
 	ld hl, VARIABLE
 	add hl, bc
-	ld a, [hl] ;variable = external ID for the first song to render
+	ld a, [hl] ;variable = external ID for the new song to render
 	ldh [scratch_byte], a
 	
-	ld hl, SONGLIST
+	ld hl, TASKSRC
 	add hl, bc
-	ld b, a ;retrieve variable
-	ld c, $05 ;c = loop counter
-	
-	ld de, sort_table
-	and $3F
-	add e
-	ld e, a
-	ld a, d
-	adc $00
-	ld d, a ;de = pointer to internal song ID
-	
-	.copyLoop:
-		ld a, [de]
-		inc de
-		ldi [hl], a ;copy 5 internal IDs to local memory
-		ld a, e
-		cp LOW(sort_table.end)
-		jr nz, menuLoadText.noWrap
-			ld de, sort_table
-		.noWrap:
-		dec c
-	jr nz, menuLoadText.copyLoop
-	
-	swapInRam shadow_oam
-	ld hl, shadow_oam
-	ld a, b ;retrieve variable
-	and $80
-	
-	ld bc, $F800 + STARTX ;if scrolling up, first song title is above the screen.
-	jr z, menuLoadText.up
-		ld bc, $1800 + STARTX + $10 ;if scrolling down, move 4 tiles down, 2 tiles over.
+	cp $80
+	dec a
+	jr c, menuLoadText.up
+		add $03
 	.up:
+	and $3F
 	
-	call menuLoadText.loadSongNames ;copy sprites to shadow oam
+	ld d, a
+	ld e, a
+	srl e
+	rra
+	srl e
+	rra
+	add $40
+	ldi [hl], a
+	ld a, d
+	adc e
+	or $40
+	ldi [hl], a
+	ld a, BANK(song_names_vwf)
+	bit 6, d
+	jr z, menuLoadText.smallBank
+		inc a
+	.smallBank:
+	ldi [hl], a
+	
+	swapInRam menu_text_head
+	ld a, [menu_text_head]
+	ld d, a
+	ld e, a
+	ld a, e
+	srl e
+	rra
+	srl e
+	rra
+	and $C0
+	add LOW(sprite_tiles1) | BANK(sprite_tiles1)
+	ldi [hl], a
+	ld a, d
+	adc e
+	add HIGH(sprite_tiles1)
+	ldi [hl], a
+	ld [hl], $13
 	
 	ldh a, [scratch_byte]
-	and $80
-	ld hl, shadow_oam + $0053
-	jr nz, menuLoadText.down
-		ld hl, shadow_oam + $002B
-	.down:
+	cp $80
+	ld a, [menu_text_head]
+	jr nc, menuLoadText.down
 	
-	ld de, $0004
-	ld bc, $0A09 ;de = distance between sprites, b = loop counter, c = palette to write
+	;up
+	ld bc, $F800
+	sub $01
+	jr nc, menuLoadText.goodIndexUp
+		ld a, $04
+	.goodIndexUp:
+	ld [menu_text_head], a
+	ldh [scratch_byte], a
+	ld hl, shadow_oam
 	
-	.paletteLoop:
-		ld [hl], c
-		add hl, de
-		dec b
-	jr nz, menuLoadText.paletteLoop ;replace the soon-to-be-selected song's palette.
-	
-	restoreBank "ram"
-	restoreBank "ram"
-	pop bc
-	
-	;next we just need the actual tile data for each sprite. the source address will change randomly, but dest address will change sequentially, so we can initialize it now.
-	ld hl, TASKDESTLOW
-	add hl, bc
-	ld a, LOW((sprite_tiles1 - $0140) | BANK(sprite_tiles1))
-	ldi [hl], a
-	ld a, HIGH((sprite_tiles1 - $0140) | BANK(sprite_tiles1))
-	ldi [hl], a
-	ld [hl], $13 ;20 tiles
-	
-	.gfxLoop:
-		ld hl, NUMTASKS ;we will use the number of completed tasks as a loop counter. the background actors are staggered so they shouldnt clog up the gfx task buffer
-		add hl, bc
-		ldi a, [hl] ;hl now points to song list
+	.loopUp:
+		ldh a, [scratch_byte]
+		inc a
 		cp $05
-			jr z, menuLoadText.break
-		
-		add l
-		ld l, a
-		ld a, h
-		adc $00
-		ld h, a ;hl = pointer to song ID
-		
-		ld a, [hl] ;calculate src address = ((ID*320)%$4000) + $4040
+		jr c, menuLoadText.proceedUp
+			xor a
+		.proceedUp:
+		ldh [scratch_byte], a
+		ld e, a
+		add a
+		add a
+		swap e
+		add e
 		ld d, a
-		ld e, $00
-		rra
-		rr e
-		rra
-		rr e
-		and $3F
-		add d
-		ld d, a ;de = distance from start of gfx data
-		
-		ld hl, TASKSRCLOW
-		add hl, bc
-		ld a, e
-		add $40
-		ldi [hl], a
-		ld a, d
-		adc $00
-		ld d, a
-		or $40
-		ldi [hl], a
-		ld a, BANK(song_names_vwf)
-		bit 6, d
-		jr z, menuLoadText.smallBank
-			inc a
-		.smallBank:
-		ldi [hl], a ;hl now points to destination
-		
-		ld a, [hl]
-		add $40
-		ldi [hl], a
-		ld a, [hl]
-		adc $01
-		ldi [hl], a
-		
-		call submitGraphicsTask
-	jr menuLoadText.gfxLoop
-	.break:
-	
-	ld e, c
-	ld d, b
-	jp removeActor
+		call menuLoadText.loadSong
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+		ld a, b
+		add $20
+		ld b, a
+		rrca
+		add $04
+		ld c, a
+		cp $48
+	jr c, menuLoadText.loopUp
 	
-.loadSongNames: ;hl = pointer to oam, b = y coordinate, c = x coordinate
-;each sprite will just use the next available tile. this means we can avoid actually reading the string and instead just increment by fixed amounts.
-	ld d, $00 ;d will accumulate how many tiles we have used
-	.nextSong:
-		ld e, $0A ;e counts how many sprites are left for the current string
-		.loop:
-			ld a, b
-			ldi [hl], a ;y coord
-			ld a, c
-			ldi [hl], a ;x coord
-			add $08
-			ld c, a
-			ld a, d
-			ldi [hl], a ;tile ID
-			add $02
-			ld d, a
-			ld [hl], $08 ;sprite attr, they will go in bank 1
-			inc hl
-			
-			dec e
-		jr nz, menuLoadText.loop
+	ld l, $00
+	ld a, [active_oam_buffer]
+	xor $01
+	ld h, a
+	ld a, c
+	cp $48
+	jr z, menuLoadText.loopUp
+	jr menuLoadText.cleanup		
+	
+	.down:
+	ld e, a
+	ld bc, $1810
+	inc a
+	cp $05
+	jr c, menuLoadText.goodIndexDown
+		xor a
+	.goodIndexDown:
+	ld [menu_text_head], a
+	ld a, e
+	ldh [scratch_byte], a
+	ld hl, shadow_oam
+	
+	.loopDown:
+		ldh a, [scratch_byte]
+		sub $01
+		jr nc, menuLoadText.proceedDown
+			ld a, $05
+		.proceedDown:
+		ldh [scratch_byte], a
+		ld e, a
+		add a
+		add a
+		swap e
+		add e
+		ld d, a
+		call menuLoadText.loadSong
 		
 		ld a, b
 		add $20
 		ld b, a
 		rrca
-		add $04 + STARTX
-		ld c, a ;increment vertical position and reset horizontal position
-		
-		ld a, d
-		cp $50 ;if we reach all 40 sprites, then we are done
-	jr nz, menuLoadText.nextSong
+		add $04
+		ld c, a
+		cp $58
+	jr c, menuLoadText.loopDown
 	
-	swapInRam on_deck
-	
-	ld hl, on_deck.active_buffer
-	ldi a, [hl]
+	ld l, $00
+	ld a, [active_oam_buffer]
 	xor $01
 	ld h, a
-	ld e, $0A
+	ld a, c
+	cp $58
+	jr z, menuLoadText.loopDown
 	
-	.loop2:
+	.cleanup:
+	restoreBank "ram"
+	restoreBank "ram"
+	pop de
+	jp removeActor
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+.loadSong:
+	ld e, $0A
+	.nextSprite:
 		ld a, b
 		ldi [hl], a
 		ld a, c
@@ -192,15 +177,12 @@ menuLoadText:
 		ld c, a
 		ld a, d
 		ldi [hl], a
-		add $02
-		ld d, a
-		ld [hl], $08
-		inc hl
-		
+		inc d
+		inc d
+		ld a, $08
+		ldi [hl], a
 		dec e
-	jr nz, menuLoadText.loop2
-	
-	restoreBank "ram"
+	jr nz, menuLoadText.nextSprite
 	ret
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
