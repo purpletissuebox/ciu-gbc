@@ -16,8 +16,8 @@ menuSprites:
 	cp $80
 		jr c, menuSprites.up
 	
-	;song ID refers to the song below us. need the song above us instead.
-	sub $02
+	;song ID refers to the song below us. need the song off the bottom of the screen instead.
+	add $02
 	and $3F
 	or $80
 	ld b, $7A
