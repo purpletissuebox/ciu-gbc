@@ -5,9 +5,6 @@ SECTION "LOAD TEXT", ROMX
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 VARIABLE = $0003
-TASKSRCLOW = $0004
-TASKDESTLOW = $0007
-SONGLIST = $000B
 STARTX = $00
 
 menuLoadText:
@@ -15,20 +12,13 @@ menuLoadText:
 	swapInRam sort_table
 	ld hl, VARIABLE
 	add hl, bc
-	ld a, [hl] ;variable = external ID for the new song to render
+	ldi a, [hl] ;variable = external ID for the new song to render
 	ldh [scratch_byte], a
-	
-	ld hl, TASKSRC
-	add hl, bc
-	cp $80
-	dec a
-	jr c, menuLoadText.up
-		add $03
-	.up:
+
 	and $3F
-	
 	ld d, a
 	ld e, a
+	xor a
 	srl e
 	rra
 	srl e
@@ -39,6 +29,7 @@ menuLoadText:
 	adc e
 	or $40
 	ldi [hl], a
+	
 	ld a, BANK(song_names_vwf)
 	bit 6, d
 	jr z, menuLoadText.smallBank
@@ -50,58 +41,58 @@ menuLoadText:
 	ld a, [menu_text_head]
 	ld d, a
 	ld e, a
-	ld a, e
+	xor a
 	srl e
 	rra
 	srl e
 	rra
-	and $C0
 	add LOW(sprite_tiles1) | BANK(sprite_tiles1)
 	ldi [hl], a
 	ld a, d
 	adc e
 	add HIGH(sprite_tiles1)
 	ldi [hl], a
+	
 	ld [hl], $13
 	
 	ldh a, [scratch_byte]
 	cp $80
-	ld a, [menu_text_head]
 	jr nc, menuLoadText.down
 	
 	;up
-	ld bc, $F800
+	ld a [menu_text_head]
+	ld e, a
 	sub $01
 	jr nc, menuLoadText.goodIndexUp
 		ld a, $04
 	.goodIndexUp:
 	ld [menu_text_head], a
-	ldh [scratch_byte], a
+	ld a, e
+	add a
+	add a
+	add e
+	add a
+	add a
+	ld d, a
+	
 	ld hl, shadow_oam
+	ld bc, $F800 + STARTX
 	
 	.loopUp:
-		ldh a, [scratch_byte]
-		inc a
-		cp $05
-		jr c, menuLoadText.proceedUp
-			xor a
-		.proceedUp:
-		ldh [scratch_byte], a
-		ld e, a
-		add a
-		add a
-		swap e
-		add e
-		ld d, a
 		call menuLoadText.loadSong
-
+		
+		ld a, d
+		sub $A0
+		jr nz, menuLoadText.tileWrapUp
+			ld d, a
+		.tileWrapUp:
 		ld a, b
 		add $20
 		ld b, a
 		rrca
-		add $04
+		add $04 + STARTX
 		ld c, a
-		cp $48
+		cp $40 + STARTX
 	jr c, menuLoadText.loopUp
 	
 	ld l, $00
@@ -109,45 +100,44 @@ menuLoadText:
 	xor $01
 	ld h, a
 	ld a, c
-	cp $48
-	jr z, menuLoadText.loopUp
-	jr menuLoadText.cleanup		
+	cp $40 + STARTX
+	jr z, menuLoadText.loopDown
+	jr menuLoadText.cleanup
 	
 	.down:
-	ld e, a
-	ld bc, $1810
+	ld a [menu_text_head]
 	inc a
 	cp $05
 	jr c, menuLoadText.goodIndexDown
 		xor a
 	.goodIndexDown:
 	ld [menu_text_head], a
-	ld a, e
-	ldh [scratch_byte], a
+	ld e, a
+	add a
+	add a
+	add e
+	add a
+	add a
+	ld d, a
+	
 	ld hl, shadow_oam
+	ld bc, $1810 + STARTX
 	
 	.loopDown:
-		ldh a, [scratch_byte]
-		sub $01
-		jr nc, menuLoadText.proceedDown
-			ld a, $05
-		.proceedDown:
-		ldh [scratch_byte], a
-		ld e, a
-		add a
-		add a
-		swap e
-		add e
-		ld d, a
 		call menuLoadText.loadSong
 		
+		ld a, d
+		sub $A0
+		jr nz, menuLoadText.tileWrapDown
+			ld d, a
+		.tileWrapDown:
 		ld a, b
 		add $20
 		ld b, a
 		rrca
-		add $04
+		add $04 + STARTX
 		ld c, a
-		cp $58
+		cp $50 + STARTX
 	jr c, menuLoadText.loopDown
 	
 	ld l, $00
@@ -155,7 +145,7 @@ menuLoadText:
 	xor $01
 	ld h, a
 	ld a, c
-	cp $58
+	cp $50 + STARTX
 	jr z, menuLoadText.loopDown
 	
 	.cleanup:
