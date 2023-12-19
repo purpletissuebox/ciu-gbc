@@ -90,7 +90,7 @@ ret
 
 SECTION "SCANLINE BUFFER SWAP", ROMX
 
-TIMER = $000F
+TIMER = $0003
 
 swapBuffers:
 .first:
