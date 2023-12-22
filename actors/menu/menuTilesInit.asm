@@ -150,7 +150,7 @@ menuTilesInit:
 	ld d, h ;de = source address
 	
 	ld hl, shadow_attr + $0058 ;hl = destination address
-	ld b, $0B ;b = number of steps to load
+	ld b, $0A ;b = number of steps to load
 	
 	.attrStart:
 		ld c, $1D; c = number of tiles per row to copy
