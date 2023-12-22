@@ -27,6 +27,7 @@ menuLoadText:
 	ldi [hl], a
 	ld a, d
 	adc e
+	ld d, a
 	or $40
 	ldi [hl], a
 	
@@ -60,7 +61,7 @@ menuLoadText:
 	jr nc, menuLoadText.down
 	
 	;up
-	ld a [menu_text_head]
+	ld a, [menu_text_head]
 	ld e, a
 	sub $01
 	jr nc, menuLoadText.goodIndexUp
@@ -82,7 +83,7 @@ menuLoadText:
 		call menuLoadText.loadSong
 		
 		ld a, d
-		sub $A0
+		sub $64
 		jr nz, menuLoadText.tileWrapUp
 			ld d, a
 		.tileWrapUp:
@@ -105,7 +106,7 @@ menuLoadText:
 	jr menuLoadText.cleanup
 	
 	.down:
-	ld a [menu_text_head]
+	ld a, [menu_text_head]
 	inc a
 	cp $05
 	jr c, menuLoadText.goodIndexDown
@@ -127,7 +128,7 @@ menuLoadText:
 		call menuLoadText.loadSong
 		
 		ld a, d
-		sub $A0
+		sub $64
 		jr nz, menuLoadText.tileWrapDown
 			ld d, a
 		.tileWrapDown:
@@ -151,7 +152,20 @@ menuLoadText:
 	.cleanup:
 	restoreBank "ram"
 	restoreBank "ram"
-	pop de
+	pop bc
+	updateActorMain menuLoadText.submit
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+.submit:
+	call submitGraphicsTask
+	ld hl, NUMTASKS
+	add hl, bc
+	ld a, [hl]
+	dec a
+		ret nz
+	ld e, c
+	ld d, b
 	jp removeActor
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
