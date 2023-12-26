@@ -69,7 +69,7 @@ scrollText:
 	dw $7F7F, $0000, $FCF8, $FEFB, $FEFC, $FEFD, $FFFD, $FFFE, $FFFE, $FFFF, $FFFF, $00FF, $FFFF, $00FF, $0000, $0000 ;down
 
 .confirm:
-	NEWACTOR swapBuffers, $FF
+	NEWACTOR swapBuffers, $00
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -107,15 +107,19 @@ swapBuffers:
 		ld e, c
 		ld d, b
 		call spawnActor
+		.exit:
 		ld e, c
 		ld d, b
 		jp removeActor
 	
 	.ready:
-	updateActorMain swapBuffers.subsequent
 	ld hl, TIMER
 	add hl, bc
-	ld [hl], $0F
+	ld a, [hl]
+	inc a
+	ld [hl], a
+	and $0F
+	jr z, swapBuffers.exit
 	
 	swapInRam active_oam_buffer
 	ld de, active_oam_buffer
@@ -128,47 +132,11 @@ swapBuffers:
 	ld e, a
 	ld l, a
 	
-	push bc
 	ld c, $28
 	rst $10
-	pop de
 	
 	ld a, [LYC_buffer]
 	ldh [$FF45], a
 	
-	restoreBank "ram"
-	ret
-
-.subsequent:
-	ldh a, [$FF44]
-	cp $7C
-		jr nc, swapBuffers.ready2
-	
-		ld hl, ACTORSIZE - 2
-		add hl, bc
-		ldi a, [hl]
-		or [hl]
-	jr z, swapBuffers.subsequent
-	
-		ld e, c
-		ld d, b
-		call spawnActor
-		ld e, c
-		ld d, b
-		jp removeActor
-	
-	.ready2:
-	ld hl, TIMER
-	add hl, bc
-	dec [hl]
-	jr nz, swapBuffers.doTheSwap
-		ld e, c
-		ld d, b
-		jp removeActor
-	.doTheSwap:
-	swapInRam active_oam_buffer
-	ld a, [active_oam_buffer]
-	xor $01
-	ld [active_oam_buffer], a
 	restoreBank "ram"
 	ret
