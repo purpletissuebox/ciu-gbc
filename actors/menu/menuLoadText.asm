@@ -102,7 +102,7 @@ menuLoadText:
 	ld h, a
 	ld a, c
 	cp $40 + STARTX
-	jr z, menuLoadText.loopDown
+	jr z, menuLoadText.loopUp
 	jr menuLoadText.cleanup
 	
 	.down:
