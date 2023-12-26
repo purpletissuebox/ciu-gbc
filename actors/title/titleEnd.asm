@@ -29,9 +29,9 @@ titleEnd:
 	ld c, $10
 	rst $18 ;check if save file contains a special string
 	
-	ld b, $03 ;if it does, progress to the menu scene
+	ld b, MENU ;if it does, progress to the menu scene
 	jr z, titleEnd.saveExists
-		inc b ;else character scene
+		;inc b ;else character scene
 	.saveExists:
 	
 	restoreBank "ram"
