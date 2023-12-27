@@ -51,18 +51,18 @@ instrument: MACRO ;\1-\3 = inst string IDs, \1 = pcm
 		db BANK(\1)
 		db $FF, $FF, $FF, $FF
 	ELSE
-SETTINGS = 0
+INSTSETTINGS = 0
 		REPT 3
 			IF (\1) >= 0
-SETTINGS = SETTINGS | 8
+INSTSETTINGS = INSTSETTINGS | 8
 			ENDC
 			
-SETTINGS = SETTINGS >> 1
+INSTSETTINGS = INSTSETTINGS >> 1
 			shift 1
 		ENDR
 		
 		shift -3		
-		db SETTINGS
+		db INSTSETTINGS
 		
 		IF(\1 >= 0)
 			dw .duty_string_\1
