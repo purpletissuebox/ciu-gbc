@@ -1,4 +1,4 @@
-SECTION "MENU HUD", ROMX
+SECTION "MENU HUD INIT", ROMX
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;loads tiles, attributes, and map for the hud on the menu scene.
