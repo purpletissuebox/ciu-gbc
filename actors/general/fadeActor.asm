@@ -331,7 +331,7 @@ ENDM
 	FADEENTRY $10, $7F, "up",   title_colors, $02     ;2
 	FADEENTRY $80, $30, "down", title_colors, $03     ;3
 	FADEENTRY $80, $30, "down", title_colors, $04     ;4
-	FADEENTRY $01, $7F, "up",   menu_colors, $05      ;5
+	FADEENTRY $08, $50, "up",   menu_colors, $05      ;5
 	FADEENTRY $01, $40, "up",   character_colors, $06 ;6
 
 .actor_table:

@@ -306,7 +306,7 @@ setColorsOBJ:
 	FADEENTRY $01, $7F, "up", text_colors, $00
 	FADEENTRY $80, $30, "down", text_colors, $00
 	FADEENTRY $01, $40, "up", text_colors_char, $00
-	FADEENTRY $01, $40, "up", text_colors_menu, $00
+	FADEENTRY $08, $50, "up", text_colors_menu, $00
 
 .actor_table:
 	dw dummy_actor

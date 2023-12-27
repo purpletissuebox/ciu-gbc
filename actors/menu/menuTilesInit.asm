@@ -393,6 +393,7 @@ menuTilesInit:
 	ld de, menuTilesInit.color_actor
 	call spawnActor
 	call spawnActor
+	call spawnActor
 	
 	restoreBank "ram"
 	ld e, c
@@ -402,8 +403,9 @@ menuTilesInit:
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 .color_actor:
-	NEWACTOR setColors, $85
-	NEWACTOR setColorsOBJ, $83
+	NEWACTOR setColors, $05
+	NEWACTOR setColorsOBJ, $03
+	NEWACTOR menuFlicker, $FF
 
 .chunk_positions:
 	dw menu_bands0 | BANK(menu_bands0),   menu_bands1 | BANK(menu_bands1),   menu_G_chunks | BANK(menu_G_chunks),   menu_O_chunks | BANK(menu_O_chunks),   menu_Y_chunks | BANK(menu_Y_chunks),   menu_P_chunks | BANK(menu_P_chunks)
