@@ -12,10 +12,7 @@ titleEnd:
 	ld a, [press_input]
 	and $08
 	ret z ;wait for player to press start
-	
-	ld e, c
-	ld d, b
-	call removeActor
+	push bc
 	
 	xor a
 	ldh [music_on], a ;disable music
@@ -29,7 +26,7 @@ titleEnd:
 	ld c, $10
 	rst $18 ;check if save file contains a special string
 	
-	ld b, MENU ;if it does, progress to the menu scene
+	ld b, $03 ;if it does, progress to the menu scene
 	jr z, titleEnd.saveExists
 		;inc b ;else character scene
 	.saveExists:
@@ -37,7 +34,10 @@ titleEnd:
 	restoreBank "ram"
 	ld a, b	
 	ld de, titleEnd.remove_bkg
-	jp spawnActorV
+	call spawnActorV
+	
+	pop de
+	jp removeActor
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 	
@@ -48,5 +48,5 @@ titleEnd:
 	NEWACTOR setColorsOBJ,$01
 
 .remove_bkg:
-	NEWACTOR setColors,$00
+	NEWACTOR setColors,$FF
 	
