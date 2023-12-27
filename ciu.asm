@@ -106,6 +106,7 @@ INCLUDE "../actors/menu/menuManager.asm"
 INCLUDE "../actors/menu/menuSpritesInit.asm"
 INCLUDE "../actors/menu/menuTilesInit.asm"
 INCLUDE "../actors/menu/menuHUDInit.asm"
+INCLUDE "../actors/menu/menuHUD.asm"
 INCLUDE "../actors/menu/menuInput.asm"
 INCLUDE "../actors/menu/menuBkg.asm"
 INCLUDE "../actors/menu/menuTiles.asm"
@@ -115,6 +116,7 @@ INCLUDE "../actors/menu/menuSprites.asm"
 INCLUDE "../actors/menu/menuLoadText.asm"
 INCLUDE "../actors/menu/menuScrollText.asm"
 INCLUDE "../actors/menu/menuScanline.asm"
+INCLUDE "../actors/menu/menuFlicker.asm"
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;rst routines
