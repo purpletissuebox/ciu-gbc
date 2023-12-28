@@ -160,4 +160,4 @@ menuInput:
 	NEWACTOR menuSprites, $FF
 
 .hud_actor:
-	;NEWACTOR menuHUD, $FF
+	NEWACTOR menuHUD, $FF

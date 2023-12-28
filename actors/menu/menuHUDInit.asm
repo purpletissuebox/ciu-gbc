@@ -9,24 +9,26 @@ menuHUDInit:
 .init:
 	updateActorMain menuHUDInit.submit
 	swapInRam shadow_wmap
+	
 	ld hl, shadow_wmap
 	ld de, hud_initial_map
 	ld bc, (BANK(hud_initial_map) << 8) | ((hud_initial_map.end - hud_initial_map) >> 4)
-	call bcopyBanked
+	call bcopyBanked ;copy starting map to buffer in ram
+	
 	ld hl, shadow_wattr
 	ld de, hud_initial_attr
 	ld bc, (BANK(hud_initial_attr) << 8) | ((hud_initial_attr.end - hud_initial_attr) >> 4)
-	call bcopyBanked
+	call bcopyBanked ;copy starting attributes to buffer in ram
 	restoreBank "ram"
 	ret
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-.submit:
+.submit: ;loop for each task and submit it
 	ld hl, NUMTASKS
 	add hl, bc
-	ld a, [hl]
-	cp ((menuHUDInit.end - menuHUDInit.hud_tasks) >> 3)
+	ld a, [hl] ;get number of successful graphics tasks
+	cp ((menuHUDInit.end - menuHUDInit.hud_tasks) >> 3) ;if we hit the end, exit.
 	jr nz, menuHUDInit.continue
 		ld e, c
 		ld d, b
@@ -41,7 +43,7 @@ menuHUDInit:
 	ld a, d
 	adc $00
 	ld d, a
-	call loadGraphicsTask
+	call loadGraphicsTask ;submit the ith task in the list
 	jp submitGraphicsTask
 	
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

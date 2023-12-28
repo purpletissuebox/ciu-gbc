@@ -93,18 +93,17 @@ SECTION "SCANLINE BUFFER SWAP", ROMX
 TIMER = $0003
 
 swapBuffers:
-.first:
 	ldh a, [$FF44]
 	cp $7C
-		jr nc, swapBuffers.ready
+		jr nc, swapBuffers.ready ;wait until the on deck sprites have been rendered before switching. this way the graphics within one frame are consistent.
 	
 		ld hl, ACTORSIZE - 2
 		add hl, bc
 		ldi a, [hl]
 		or [hl]
-	jr z, swapBuffers
+	jr z, swapBuffers ;check if other actors are waiting to run. if not, keep waiting for the scanline interrupt.
 	
-		ld e, c
+		ld e, c ;if so, respawn to give them a chance to run
 		ld d, b
 		call spawnActor
 		.exit:
@@ -116,7 +115,7 @@ swapBuffers:
 	ld hl, TIMER
 	add hl, bc
 	ld a, [hl]
-	inc a
+	inc a ;increment timer, actor exits after $0F frames
 	ld [hl], a
 	and $0F
 	jr z, swapBuffers.exit
@@ -124,18 +123,18 @@ swapBuffers:
 	swapInRam active_oam_buffer
 	ld de, active_oam_buffer
 	ld a, [de]
-	ld h, a
+	ld h, a ;hl points to active buffer
 	xor $01
-	ld [de], a
-	ld d, a
+	ld [de], a ;toggle which one is active for next frame
+	ld d, a ;de points to inactive buffer
 	xor a
 	ld e, a
 	ld l, a
 	
 	ld c, $28
-	rst $10
+	rst $10 ;copy inactive to active to make sure other actors are doing work on an up-to-date copy
 	
-	ld a, [LYC_buffer]
+	ld a, [LYC_buffer] ;set LYC for next frame
 	ldh [$FF45], a
 	
 	restoreBank "ram"

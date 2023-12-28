@@ -16,7 +16,7 @@ menuSprites:
 	cp $80
 		jr c, menuSprites.up
 	
-	;song ID refers to the song below us. need the song off the bottom of the screen instead.
+	;when scrolling down, song ID refers to the song below us. need the song off the bottom of the screen instead.
 	add $02
 	and $3F
 	or $80
@@ -29,6 +29,7 @@ menuSprites:
 	and $3F
 	ld b, $5A
 	
+	;spawn all of the required actors.
 	.summon:
 	ld c, a
 	ld de, menuSprites.load_oam_actor
