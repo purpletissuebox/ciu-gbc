@@ -7,7 +7,7 @@ SECTION "MENU HUD INIT", ROMX
 
 menuHUDInit:
 .init:
-	updateActorMain menuHUDInit.submit
+	updateActorMain menuHUDInit.getScores
 	swapInRam shadow_wmap
 	
 	ld hl, shadow_wmap
@@ -23,6 +23,22 @@ menuHUDInit:
 	ret
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+.getScores: ;the hud actor already handles the initial tilemap, so spawn it instead of duplicating the work.
+	swapInRam last_played_difficulty
+	ld hl, last_played_difficulty
+	ldd a, [hl] ;a = difficulty
+	ld e, [hl] ;e = external song ID
+	rrca
+	rrca
+	or e ;merge variable = ddxxxxxx
+	ld de, menuHUDInit.hud_actor
+	call spawnActorV
+	restoreBank "ram"
+	updateActorMain menuHUDInit.submit
+	ret
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;	
 
 .submit: ;loop for each task and submit it
 	ld hl, NUMTASKS
@@ -47,6 +63,9 @@ menuHUDInit:
 	jp submitGraphicsTask
 	
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+.hud_actor:
+	NEWACTOR menuHUD, $FF
 
 .hud_tasks:
 	GFXTASK hud_tiles0, menu_text0, $0000
