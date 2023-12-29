@@ -106,6 +106,7 @@ menuLoadText:
 	ld a, c
 	cp $40 + STARTX
 	jr z, menuLoadText.loopUp ;go back to copy song #5. it will bump the x coordinate one more time and we can go through.
+		ld hl, shadow_oam + $53
 	jr menuLoadText.cleanup ;finish doing actor work.
 	
 	.down:
@@ -151,8 +152,17 @@ menuLoadText:
 	ld a, c
 	cp $50 + STARTX
 	jr z, menuLoadText.loopDown ;go back to copy song #5. it will bump the x coordinate one more time and we can go through.
+		ld hl, shadow_oam + $2B	
 	
 	.cleanup:
+	ld de, $0004
+	ld a, $0A
+	.paletteLoop:
+		inc [hl]
+		add hl, de
+		dec a
+	jr nz, menuLoadText.paletteLoop
+	
 	restoreBank "ram"
 	restoreBank "ram"
 	pop bc
