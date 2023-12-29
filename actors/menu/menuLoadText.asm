@@ -106,7 +106,7 @@ menuLoadText:
 	ld a, c
 	cp $40 + STARTX
 	jr z, menuLoadText.loopUp ;go back to copy song #5. it will bump the x coordinate one more time and we can go through.
-		ld hl, shadow_oam + $53
+		ld hl, shadow_oam + $2B ;hl points to the future second song on screen, which is also the second song in OAM.
 	jr menuLoadText.cleanup ;finish doing actor work.
 	
 	.down:
@@ -152,13 +152,13 @@ menuLoadText:
 	ld a, c
 	cp $50 + STARTX
 	jr z, menuLoadText.loopDown ;go back to copy song #5. it will bump the x coordinate one more time and we can go through.
-		ld hl, shadow_oam + $2B	
+		ld hl, shadow_oam + $53	;hl points to the eventual second song on the screen, but the first OAM slot ends up offscreen. so use the third song in OAM.
 	
 	.cleanup:
-	ld de, $0004
-	ld a, $0A
+	ld de, $0004 ;distance between sprites
+	ld a, $0A ;number of sprites per song
 	.paletteLoop:
-		inc [hl]
+		inc [hl] ;set selection to palette #2 so it flickers
 		add hl, de
 		dec a
 	jr nz, menuLoadText.paletteLoop
