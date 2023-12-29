@@ -70,11 +70,13 @@ menuInput:
 	and $3F
 	ldh [scratch_byte], a
 	
-	;rlca
-	;rlca
-	;or [hl]
-	;ld de, menuInput.hud_actor
-	;call spawnActorV
+	rlca
+	rlca
+	or [hl]
+	rrca
+	rrca
+	ld de, menuInput.hud_actor
+	call spawnActorV
 	
 	ldh a, [scratch_byte]
 	ld de, menuInput.bkg_actor
@@ -94,11 +96,21 @@ menuInput:
 	ld hl, CURRENTSONG
 	add hl, bc
 	inc [hl] ;next song selected
-	ld a, [hl]
+	ldi a, [hl]
 	and $3F
 	or $80
-	
 	ldh [scratch_byte], a
+	
+	rlca
+	dec a
+	rlca
+	or [hl]
+	rrca
+	rrca
+	ld de, menuInput.hud_actor
+	call spawnActorV
+	
+	ldh a, [scratch_byte]
 	ld de, menuInput.bkg_actor
 	call spawnActorV
 	
