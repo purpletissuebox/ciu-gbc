@@ -117,6 +117,10 @@ INCLUDE "../actors/menu/menuLoadText.asm"
 INCLUDE "../actors/menu/menuScrollText.asm"
 INCLUDE "../actors/menu/menuScanline.asm"
 INCLUDE "../actors/menu/menuFlicker.asm"
+INCLUDE "../actors/settings/settingsManager.asm"
+INCLUDE "../actors/settings/settingsScroll.asm"
+INCLUDE "../actors/settings/settingsGfx.asm"
+INCLUDE "../actors/settings/settingsInput.asm"
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;rst routines
