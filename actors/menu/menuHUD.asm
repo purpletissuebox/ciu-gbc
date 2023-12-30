@@ -8,8 +8,11 @@ SECTION "MENU HUD", ROMX
 VARIABLE = $0003
 NUMTASKS = $000A
 SCORELOCATION = $0021
+ARROWLOCATION = $002A
 DIFFLOCATION = $002B
-ZEROTILE = $0B
+ARROWTILE = $09
+ZEROTILE = $0A
+BLANKTILE = $1F
 
 menuHUD:
 	push bc
@@ -17,9 +20,10 @@ menuHUD:
 	add hl, bc
 	swapInRam sort_table
 	
-	;buffer pointers to important information in the cpu registers. this way we can write everything to the window at once without switching banks.
+	;need to buffer ptr to difficulty, score for this song, and the difficulty index itself. this way we can write everything to the window at once without switching banks.
+	;first buffer ptr to diffs in de
 	ld de, sort_table
-	ldi a, [hl] ;get variable
+	ldi a, [hl] ;get variable, hl points to scratch area in local memory
 	and $3F ;extract external song ID from variable
 	add e
 	ld e, a
@@ -27,7 +31,7 @@ menuHUD:
 	adc $00
 	ld d, a
 	ld a, [de] ;get internal ID from table
-	ldd [hl], a ;save to local memory to retrieve later
+	ldd [hl], a ;we will use the internal ID again later, so save it. hl points to variable again.
 	
 	ld de, menuHUD.diffTable
 	add a
@@ -38,9 +42,11 @@ menuHUD:
 	adc $00
 	ld d, a ;de points to list of 4 difficulties for this song
 	
+	;next buffer the scores in lbc
 	swapInRam save_file
-	ldi a, [hl] ;get variable again
+	ldi a, [hl] ;get variable, hl points to internal ID
 	and $C0
+	ldh [scratch_byte], a ;save difficulty to scratch ram
 	or [hl] ;filter out difficulty bits and append internal song ID
 	rlca
 	rlca ;the score list is sorted by song and then difficulty, so put the bits in that same order
@@ -60,11 +66,11 @@ menuHUD:
 	ld c, a
 	ldi a, [hl]
 	ld b, a
-	ld a, [hl]
-	ldh [scratch_byte], a ;buffer score itself in sbc
+	ld l, [hl] ;buffer score itself in lbc
 	
-	;now we can write everything to the window, starting with the difficulty because it requires no calculations	
+	;now we can write everything to the window
 	swapInRam shadow_wmap
+	push hl ;h and a are the only free registers. rending the score will be a lot of work, so we will free up hl and de by doing the difficulty first.
 	ld hl, shadow_wmap + DIFFLOCATION
 	.diffLoop:
 		ld a, [de] ;get difficulty
@@ -76,28 +82,61 @@ menuHUD:
 		sub LOW(DIFFLOCATION) + 8
 	jr nz, menuHUD.diffLoop ;loop until we hit the 8th tile (4th difficulty)
 	
-	ldh a, [scratch_byte]
-	ld e, a ;ebc = 24 bit score
+	pop de ;now we have ebc = 24 bit score. hlda are all free to do work.
 	ld hl, shadow_wmap + SCORELOCATION
 	
 	call menuHUD.itoa24 ;convert to string and write to window
+	
+	;the final task is to display the arrows. the difficulty index is still saved in scratch ram
+	ld hl, shadow_wmap + ARROWLOCATION
+	ldh a, [scratch_byte]
+	rlca
+	rlca
+	ld d, a
+	ld e, $04
+	xor a
+	ld bc, (ARROWTILE << 8) | BLANKTILE
+	
+	.arrowLoop:
+		ld [hl], c
+		cp d
+		jr nz, menuHUD.blank
+			ld [hl], b
+			set 2, h
+			ld [hl], $8C
+			inc hl
+			inc hl
+			ld [hl], $AC
+			res 2, h
+			ld [hl], b
+		.blank:
+		inc hl
+		inc hl
+		inc a
+		dec e
+	jr nz, menuHUD.arrowLoop
 	
 	restoreBank "ram"
 	restoreBank "ram"
 	restoreBank "ram"
 	pop bc
-	ld de, menuHUD.task
-	call loadGraphicsTask ;the contents of memory will change per song but the location is fixed. go ahead and load it now.
 	updateActorMain menuHUD.submit
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 .submit:
+	ld de, menuHUD.win_task
+	call loadGraphicsTask ;the contents of memory will change per song but the location is fixed. go ahead and load it now.
 	call submitGraphicsTask ;submit task until it goes through
+	ld de, menuHUD.attr_task
+	call loadGraphicsTask
+	call submitGraphicsTask
+	
 	ld hl, NUMTASKS
 	add hl, bc
 	ld a, [hl]
-	dec a
+	ld [hl], $00
+	sub $02
 	ret nz
 	
 	ld e, c
@@ -237,8 +276,10 @@ menuHUD:
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-.task:
+.win_task:
 	GFXTASK shadow_whud_map, win_map, $0000
+.attr_task:
+	GFXTASK shadow_whud_attr, win_attr, $0000
 
 .diffTable:
 	INCBIN "../assets/code/difficultyTable.bin"
