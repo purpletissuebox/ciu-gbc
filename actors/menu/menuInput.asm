@@ -156,6 +156,8 @@ menuInput:
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 .select:
+	ld de, menuInput.scene_actor
+	call spawnActor
 	ret
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -186,12 +188,12 @@ menuInput:
 	ret
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-	
+
+.scene_actor:
+	NEWACTOR settingsManager, $FF
 .bkg_actor:
 	NEWACTOR menuBkg, $FF
-
 .sprite_actor:
 	NEWACTOR menuSprites, $FF
-
 .hud_actor:
 	NEWACTOR menuHUD, $FF
