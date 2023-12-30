@@ -124,11 +124,33 @@ menuInput:
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 .left:
+	ld hl, CURRENTDIFF
+	add hl, bc
+	ld a, [hl]
+	dec a
+	and $03
+	ldd [hl], a
+	rrca
+	rrca
+	or [hl]
+	ld de, menuInput.hud_actor
+	call spawnActorV
 	ret
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 .right:
+	ld hl, CURRENTDIFF
+	add hl, bc
+	ld a, [hl]
+	inc a
+	and $03
+	ldd [hl], a
+	rrca
+	rrca
+	or [hl]
+	ld de, menuInput.hud_actor
+	call spawnActorV
 	ret
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
