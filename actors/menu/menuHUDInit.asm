@@ -80,10 +80,10 @@ SECTION "HUD GRAPHICS", ROMX
 
 align 4
 hud_tiles0:
-	INCBIN "../assets/gfx/bkg/menu/hudTiles.bin", $0000, $01E0
+	INCBIN "../assets/gfx/bkg/menu/hudTiles.bin",                     $0000, menu_text0.end-menu_text0
 	.end
 hud_tiles1:
-	INCBIN "../assets/gfx/bkg/menu/hudTiles.bin", $01E0, $01E0
+	INCBIN "../assets/gfx/bkg/menu/hudTiles.bin", menu_text0.end-menu_text0, menu_text1.end-menu_text1
 	.end
 hud_initial_map:
 	INCBIN "../assets/gfx/bkg/menu/hudMap.bin"
