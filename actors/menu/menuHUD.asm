@@ -10,8 +10,8 @@ NUMTASKS = $000A
 SCORELOCATION = $0021
 ARROWLOCATION = $002A
 DIFFLOCATION = $002B
-ARROWTILE = $09
-ZEROTILE = $0A
+ARROWTILE = $21
+ZEROTILE = $23
 BLANKTILE = $1F
 
 menuHUD:
@@ -103,10 +103,10 @@ menuHUD:
 		jr nz, menuHUD.blank
 			ld [hl], b
 			set 2, h
-			ld [hl], $8C
+			ld [hl], $87
 			inc hl
 			inc hl
-			ld [hl], $AC
+			ld [hl], $A7
 			res 2, h
 			ld [hl], b
 		.blank:
