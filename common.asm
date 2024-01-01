@@ -151,7 +151,6 @@ init: ;puts all hardware registers into a known state, loads minimal text graphi
 		dec b
 	jr nz, init.soundLoop ;disable individual channel sound registers
 	
-	ld e, $00
 	call changeScene
 	call loadGame ;load save file and first actor in prep for gameplay
 	
