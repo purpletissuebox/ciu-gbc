@@ -65,9 +65,10 @@ menuInput:
 	;scroll towards lower-numbered songs
 	ld hl, CURRENTSONG
 	add hl, bc
-	dec [hl] ;we now have the previous song selected
-	ldi a, [hl]
+	ld a, [hl]
+	dec a ;select previous song
 	and $3F
+	ldi [hl], a
 	ldh [scratch_byte], a
 	
 	rlca
@@ -95,9 +96,10 @@ menuInput:
 	;scroll towards higher-numbered songs
 	ld hl, CURRENTSONG
 	add hl, bc
-	inc [hl] ;next song selected
-	ldi a, [hl]
+	ld a, [hl]
+	inc a ;select next song
 	and $3F
+	ldi [hl], a
 	or $80
 	ldh [scratch_byte], a
 	
