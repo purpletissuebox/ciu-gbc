@@ -306,13 +306,10 @@ menu_bands0:
 	ds $0820
 	.end
 menu_text0:
-	ds $01E0
+	ds $0360
 	.end
 menu_G_chunks:
 	ds $0480
-	.end
-menu_P_chunks:
-	ds $0180
 	.end
 ENDU
 	
@@ -341,7 +338,7 @@ menu_bands1:
 	ds $0820
 	.end
 menu_text1:
-	ds $01E0
+	ds $0060
 	.end
 menu_O_chunks:
 	ds $0380
@@ -349,8 +346,9 @@ menu_O_chunks:
 menu_Y_chunks:
 	ds $0280
 	.end
-
-
+menu_P_chunks:
+	ds $0180
+	.end
 ENDU
 
 SECTION "BKGATTR", VRAM[$9800], BANK[1]
