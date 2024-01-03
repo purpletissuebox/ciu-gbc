@@ -151,15 +151,24 @@ init: ;puts all hardware registers into a known state, loads minimal text graphi
 		dec b
 	jr nz, init.soundLoop ;disable individual channel sound registers
 	
+	xor a
 	call changeScene
-	call loadGame ;load save file and first actor in prep for gameplay
+	ld a, $FF
+	ldh [actors_done], a
+	call loadGame ;load save file and first actor
 	
-	.waitForVBlank:
-		ldh a, [$FF44]
-		cp $91
-	jr nz, init.waitForVBlank
+	ldh a, [$FF0F]
+	and $FE
+	ldh [$FF0F], a
 	ei
+	call waitForVBlank
 	jp MAIN ;as soon as we enter vblank, start the game
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+waitForVBlank: ;when called, other interrupts will simply get caught in the loop. only the vblank interrupt contains an extra pop, causing it to return to whoever called this function.
+	halt
+	jr waitForVBlank
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -169,9 +178,12 @@ VBLANK: ;graphics handler that runs once per frame.
 ;graphics tasks contain src-dest-size so can handle maps, attr, and tiles.
 
 	push af
-	push bc
-	push de
-	push hl
+	ldh a, [actors_done] ;check if actors are done running. if they aren't, that means we need to insert a lag frame.
+	and a
+	jr nz, VBLANK.noLag
+		pop af ;if we are lagging, do not do any graphics processing and return to the caller.
+		reti
+	.noLag:
 	ldh a, [rom_bank]
 	push af
 	ldh a, [ram_bank]
@@ -266,11 +278,9 @@ VBLANK: ;graphics handler that runs once per frame.
 	ldh [$FF70], a
 	pop af
 	ld [$2000], a ;restore banks
-	pop hl
-	pop de
-	pop bc
-	pop af
-	ret
+	pop af ;pop the original value of registers af from the stack.
+	pop af ;pop the address of "wait for vblank" from the stack.
+	ret ;this return will go to the caller of "wait for vblank".
 	
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 	
@@ -317,8 +327,8 @@ MAIN: ;main driver code!
 ;this way, if a different interrupt wakes MAIN up, the flag is still set and it immediately sleeps again.
 
 ;when an actor is run, register bc always points to itself.
-;the actor can discard this value if it wants, but at the cost of not being able to locate its local ram anymore.
-;hl is often used to access the rest of local ram. ld hl, N \ add hl, bc \ ld a, [hl] can be used to access the Nth byte.
+;the actor can discard this value if it wants, but at the cost of not being able to locate its local variables anymore.
+;hl is often used to access the rest of local memory. ld hl, N \ add hl, bc \ ld a, [hl] can be used to access the Nth byte.
 
 	ldh a, [first_actor]
 	ld c, a
@@ -353,13 +363,7 @@ MAIN: ;main driver code!
 	ld a, $FF
 	ldh [actors_done], a ;mark the loop as done
 	call roll_rng
-	
-	.wait:
-		halt
-		nop
-		ldh a, [actors_done]
-		and a
-		jr nz, MAIN.wait ;wait for vblank to signify start of the next frame
+	call waitForVBlank
 	jr MAIN
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -822,6 +826,11 @@ retriggerOAM: ;scanline interrupt that loads extra sprites.
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+crashHandler:
+	jr crashHandler
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
 spawnActorV: ;de = ptr to actor struct, a = variable
 ;alternative to spawnActor. this version has a variable passed in via a register instead of in memory.
 ;this makes it easier to change the variable, but more difficult to get pointers to the actor after it spawns.
@@ -886,144 +895,6 @@ spawnActorV: ;de = ptr to actor struct, a = variable
 	ldh [next_actor+1], a ;mark it as such and return
 	
 	pop bc
-	ret
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-itoa24: ;hl points to integer to convert, bc points to string to save it to
-;converts 24 bit integer to string.
-	ldi a, [hl]
-	ld e, a
-	ldi a, [hl]
-	ld l, [hl]
-	ld h, a ;ehl contains the integer now
-	
-	ld d, $FF ;d = digit
-	.n10000000:
-		inc d
-		
-		ld a, l
-		sub $80
-		ld l, a
-		
-		ld a, h
-		sbc $96
-		ld h, a
-		
-		ld a, e
-		sbc $98
-		ld e, a
-	jr c, itoa24.n10000000
-	ld a, d
-	ld [bc], a
-	inc bc
-	
-	ld d, $0A
-	.n1000000:
-		dec d
-		
-		ld a, l
-		add $40
-		ld l, a
-		
-		ld a, h
-		adc $42
-		ld h, a
-		
-		ld a, e
-		adc $0F
-		ld e, a
-	jr nc, itoa24.n1000000
-	ld a, d
-	ld [bc], a
-	inc bc
-	
-	ld d, $FF
-	.n100000:
-		inc d
-		
-		ld a, l
-		sub $A0
-		ld l, a
-		
-		ld a, h
-		sbc $86
-		ld h, a
-		
-		ld a, e
-		sbc $01
-		ld e, a
-	jr c, itoa24.n100000
-	ld a, d
-	ld [bc], a
-	inc bc
-	
-	ld d, $0A
-	.n10000:
-		dec d
-		
-		ld a, l
-		add $10
-		ld l, a
-		
-		ld a, h
-		adc $27
-		ld h, a
-		
-		ld a, e
-		adc $00
-		ld e, a
-	jr nc, itoa24.n10000
-	ld a, d
-	ld [bc], a
-	inc bc
-	
-	ld d, $FF
-	.n1000:
-		inc d
-		
-		ld a, l
-		sub $E8
-		ld l, a
-		
-		ld a, h
-		sbc $03
-		ld h, a
-	jr c, itoa24.n1000
-	ld a, d
-	ld [bc], a
-	inc bc
-	
-	ld d, $0A
-	.n100:
-		dec d
-		
-		ld a, l
-		add $64
-		ld l, a
-		
-		ld a, h
-		adc $00
-		ld h, a
-	jr nc, itoa24.n100
-	ld a, d
-	ld [bc], a
-	inc bc
-	
-	ld d, $FF
-	.n10:
-		inc d
-		
-		ld a, l
-		sub $0A
-		ld l, a
-	jr c, itoa24.n10
-	ld a, d
-	ld [bc], a
-	inc bc
-	ld a, e
-	ld [bc], a
-	
 	ret
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
