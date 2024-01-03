@@ -15,12 +15,12 @@ menuFlicker:
 	add hl, bc
 	inc [hl] ;increment timer every frame
 	ld a, [hl]
-	and $03 ;on frame multiples of 4, toggle the color
+	and $07 ;on frame multiples of 8, toggle the color
 		ret nz
 	
 	ld a, [hl]
-	and $04 ;change between yellow and blue based on the next bit up
-	ld de, $0B98 ;de = color value to write
+	and $08 ;change between yellow and blue based on the next bit up
+	ld de, $0B9F ;de = color value to write
 	jr z, menuFlicker.yellow
 		ld de, $7423
 	.yellow:
