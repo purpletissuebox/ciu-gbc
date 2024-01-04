@@ -30,22 +30,25 @@ menuInput:
 	ret nz
 	
 	ldh a, [press_input]
-	bit 6, a
-	jr z, menuInput.checkDown
-		jp menuInput.up
-		
-	.checkDown:
 	bit 7, a
-	jr z, menuInput.checkLeft
+	jr z, menuInput.checkUp
 		jp menuInput.down
+	.checkUp:
+	bit 6, a
+	jr z, menuInput.checkLeft
+		jp menuInput.up
 	.checkLeft:
 	bit 5, a
 	jr z, menuInput.checkRight
 		jp menuInput.left
 	.checkRight:
 	bit 4, a
-	jr z, menuInput.checkSelect
+	jr z, menuInput.checkStart
 		jp menuInput.right
+	.checkStart:
+	bit 3, a
+	jr z, menuInput.checkSelect
+		jp menuInput.start
 	.checkSelect:
 	bit 2, a
 	jr z, menuInput.checkB
@@ -153,6 +156,11 @@ menuInput:
 	or [hl]
 	ld de, menuInput.hud_actor
 	call spawnActorV
+	ret
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+.start:
 	ret
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
