@@ -6,8 +6,8 @@ SECTION "MENU HUD INIT", ROMX
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 menuHUDInit:
-.init:
-	updateActorMain menuHUDInit.getScores
+.getMap:
+	updateActorMain menuHUDInit.getAttr
 	swapInRam shadow_wmap
 	
 	ld hl, shadow_wmap
@@ -15,10 +15,20 @@ menuHUDInit:
 	ld bc, (BANK(hud_initial_map) << 8) | ((hud_initial_map.end - hud_initial_map) >> 4)
 	call bcopyBanked ;copy starting map to buffer in ram
 	
+	restoreBank "ram"
+	ret
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+.getAttr:
+	updateActorMain menuHUDInit.getScores
+	swapInRam shadow_wattr
+	
 	ld hl, shadow_wattr
 	ld de, hud_initial_attr
 	ld bc, (BANK(hud_initial_attr) << 8) | ((hud_initial_attr.end - hud_initial_attr) >> 4)
 	call bcopyBanked ;copy starting attributes to buffer in ram
+	
 	restoreBank "ram"
 	ret
 
@@ -70,8 +80,8 @@ menuHUDInit:
 .hud_tasks:
 	GFXTASK hud_tiles0, menu_text0, $0000
 	GFXTASK hud_tiles1, menu_text1, $0000
-	GFXTASK shadow_whud_map, win_map, $0000
-	GFXTASK shadow_whud_attr, win_attr, $0000
+	GFXTASK shadow_wmap, win_map, $0000
+	GFXTASK shadow_wattr, win_attr, $0000
 	.end
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
