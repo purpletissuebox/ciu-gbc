@@ -827,65 +827,64 @@ retriggerOAM: ;scanline interrupt that loads extra sprites.
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 debuggerPrint: MACRO ;x pos, y pos, string
-	ld hl, bkg_map + 32*(\2) + (\1)
+	ld hl, bkg_map + 32*(\2) + (\1) ;hl points to the tile at coordinates (\1, \2)
 CHARINDEX = 1
-REPT STRLEN(\3)
-	ld a, STRSUB(\3, CHARINDEX,1)
-	ldi [hl], a
+REPT STRLEN(\3) ;for each character in the string
+	ld a, STRSUB(\3, CHARINDEX,1) ;put the tile ID of that character into a
+	ldi [hl], a ;save to the string
 CHARINDEX = CHARINDEX + 1
 ENDR
 	ld a, ":"
 	ldi [hl], a
 	ld a, " "
-	ldi [hl], a
+	ldi [hl], a ;print ": " for readability
 ENDM
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-crashHandler:
+crashHandler: ;we got here from rst $FF
 	di
-	ld [$C000], a
-	ld [$C001], sp
-	ld sp, $C030
+	ld [$C000], sp ;in order to preserve regsiters, we need the stack. so first preserve the stack.
+	ld sp, $C030 ;temporary stack in the graphics task area, since we won't need it anymore.
 	push hl
 	push de
 	push bc
-	push af
+	push af ;preserve cpu registers
 	ldh a, [rom_bank]
-	ld l, a
-	ldh a, [$FF70]
 	ld h, a
-	push hl
+	ldh a, [$FF70]
+	ld l, a
+	push hl ;preseve rom and ram banks
 	
 	xor a
-	ldh [$FF26], a
+	ldh [$FF26], a ;disable audio
 	
-	.waitLCD:
+	.waitLCD: ;for simplicity's sake, wait until vblank and turn off the LCD
 		ldh a, [$FF41]
 		and $03
 		dec a
 	jr nz, crashHandler.waitLCD
 	ld a, $01
-	ldh [$FF40], a
+	ldh [$FF40], a ;turn off the LCD. this will cause a white flash, but the game experience is already ruined from the crash and it makes writing to vram much easier.
 	
-	ld hl, init_data.alphabet_task
+	ld hl, init_data.alphabet_task ;to load the task, we cant use the queue system because the vblank handler's jump point might have gotten messed up. so do it manually.
 	ldi a, [hl]
-	sub $A0
+	sub $A0 ;the number tiles need to load in ten tiles = $A0 bytes behind the letters to make printing easier
 	ldh [$FF52], a
 	ldi a, [hl]
 	sbc $00
-	ldh [$FF51], a
+	ldh [$FF51], a ;write src address
 	ldi a, [hl]
-	ld [$2000], a
+	ld [$2000], a ;src bank
 	ld a, $60
 	ldh [$FF54], a
 	ld a, $8F
-	ldh [$FF53], a
-	ld a, $3F + $0A
+	ldh [$FF53], a ;destination = $A0 tiles behind tile #00
+	ld a, $3F + $0A ;copying the task itself plus the extra numbers
 	ldh [$FF55], a
 	
 	ld a, $01
-	ldh [$FF4F], a
+	ldh [$FF4F], a ;swap to vram bank 1
 	
 	ld hl, bkg_attr
 	xor a
@@ -893,10 +892,10 @@ crashHandler:
 	.attr:
 		rst $08
 		dec b
-	jr nz, crashHandler.attr
+	jr nz, crashHandler.attr ;remove all of the background attributes
 	
 	xor a
-	ldh [$FF4F], a
+	ldh [$FF4F], a ;vram bank 0
 	
 	ld hl, bkg_map
 	ld a, $3F
@@ -904,10 +903,10 @@ crashHandler:
 	.map:
 		rst $08
 		dec b
-	jr nz, crashHandler.map
+	jr nz, crashHandler.map ;clear out the map as well
 	
 	ld hl, oam_routine
-	ld [hl], $C9
+	ld [hl], $C9 ;shadow oam probably has garbage, so we will stop it from being loaded in by removing the routine
 	
 	ld a, BANK(shadow_oam)
 	ldh [$FF70], a
@@ -930,7 +929,7 @@ crashHandler:
 	ldi [hl], a
 	ld a, [de]
 	adc $00
-	ld [hl], a
+	ld [hl], a ;set the vblank graphics task springboard to point to tasksEnd so it doesnt load any
 	
 	ld a, BANK(shadow_palettes)
 	ldh [$FF70], a
@@ -941,133 +940,139 @@ crashHandler:
 	ldi [hl], a
 	ldi [hl], a
 	ldi [hl], a
-	ld a, $10
 	ldi [hl], a
-	ld a, $42
 	ldi [hl], a
 	ld a, $FF
 	ldi [hl], a
-	ldi [hl], a
+	ldi [hl], a ;create palette. the other ones are still garbage but we don't use them
 	
-	ld hl, bkg_map + 32 + 2
-	ld de, crashHandler.header
-	ld c, crashHandler.end - crashHandler.header
-	rst $10
+	debuggerPrint 2,1, "! Crash Screen !  "
 	
+	;the temporary stack contains (in order): RAM/ROM, AF, BC, DE, HL.	
 	debuggerPrint 2,3,"ROM"
-	pop de
+	pop de ;d contains rom bank, e contains ram bank
 	call crashHandler.print8
 	
 	debuggerPrint 10,3,"RAM"
-	ld a, d
-	and $07
-	ld e, a
+	ld a, e
+	and $07 ;the hardware register writes 1s to the unused bits, which we dont want to see
+	ld d, a
 	call crashHandler.print8
 	
 	debuggerPrint 1,4,"AF"
-	ld a, [$C000]
-	ld e, a
-	call crashHandler.print8
 	pop de
-	call crashHandler.print8
-	
+	call crashHandler.print16
 	debuggerPrint 11,4,"BC"
-	pop bc
-	ld e, b
-	call crashHandler.print8
-	ld e, c
-	call crashHandler.print8
-	
+	pop de
+	call crashHandler.print16
 	debuggerPrint 1,5,"DE"
-	pop bc
-	ld e, b
-	call crashHandler.print8
-	ld e, c
-	call crashHandler.print8
-	
+	pop de
+	call crashHandler.print16
 	debuggerPrint 11,5,"HL"
-	pop bc
-	ld e, b
-	call crashHandler.print8
-	ld e, c
-	call crashHandler.print8
+	pop de
+	call crashHandler.print16 ;print the cpu registers
 	
 	debuggerPrint 1,6,"SP"
-	ld bc, $C001
+	ld bc, $C000 ;we saved sp to this address earlier. however, the value located there has the rst vector itself on the stack, too.
 	ld a, [bc]
-	add $02
-	ld [bc], a
+	add $02 ;to account for this, add 2 before we print it.
+	ld e, a
 	inc bc
 	ld a, [bc]
 	adc $00
-	ld [bc], a
-	dec bc
-	ld e, a
-	call crashHandler.print8
-	ld a, [bc]
-	ld e, a
-	call crashHandler.print8
+	ld d, a
+	call crashHandler.print16
 	
-	ld hl, $C001
+	ld hl, $C000
 	ldi a, [hl]
 	ld h, [hl]
 	ld l, a
-	ld sp, hl
+	ld sp, hl ;annoyingly, you can save sp to an arbitrary location, but not read it back. so we go through hl.
 	debuggerPrint 11,6,"PC"
-	pop bc
-	dec bc
-	ld e, b
-	call crashHandler.print8
-	ld e, c
-	call crashHandler.print8
+	pop de ;retrieve the return address from the rst
+	dec de ;so the address of the instruction itself was 1 before that
+	call crashHandler.print16
 	
 	debuggerPrint 2,8,"ACTOR"
-	ld sp, $CFFE
+	ld sp, $CFFE ;the first thing to get pushed is the address of the actor in the linked list.
 	pop bc
 	inc bc
-	inc bc
+	inc bc ;bc points to the actor's bank
 	ld a, [bc]
 	dec bc
-	ld e, a
-	call crashHandler.print8
+	ld d, a
+	call crashHandler.print8 ;print bank
 	ld a, ":"
-	ldi [hl], a
+	ldi [hl], a ;print colon
 	ld a, [bc]
 	dec bc
 	ld e, a
-	call crashHandler.print8
 	ld a, [bc]
-	ld e, a
-	call crashHandler.print8
+	ld d, a
+	call crashHandler.print16 ;print address of main function
+	
+	debuggerPrint 2,9,"ADDRESS "
+	ld e, c
+	ld d, b
+	call crashHandler.print16 ;print address of the node itself, which is still in bc
+	
+	debuggerPrint 2,10,"LOCAL MEMORY"
+	
+	ld hl, bkg_map + 32*11 + 2 ;hl points to the "string" we are writing to
+	ld a, $06 ;number of rows to print
+	.nextRow:
+		ldh [scratch_byte], a
+		ld e, $06 ;number of bytes per row
+		.nextByte:
+			ld a, [bc] ;get local variable
+			inc bc
+			ld d, a
+			call crashHandler.print8 ;print it
+			inc hl ;add a space for readability
+			dec e
+		jr nz, crashHandler.nextByte
+		
+		ld de, $0020
+		add hl, de ;advance to the next row
+		ld a, l
+		and $E0
+		add $02 ;reset x position to the left column
+		ld l, a
+		ldh a, [scratch_byte]
+		dec a ;decrement number of remaining rows
+	jr nz, crashHandler.nextRow
 	
 	ld a, $01
-	ldh [$FFFF], a
+	ldh [$FFFF], a ;enable vblank interrupts
 	ld a, $81
-	ldh [$FF40], a
-	ei
+	ldh [$FF40], a ;reenable the LCD
+	ei ;the vblank interrupt calls some ram code, so only now that they have been rewritten it is safe to run it
 	.loop:
 		ld a, $FF
-		ldh [actors_done], a
-		call waitForVBlank
+		ldh [actors_done], a ;force vblank handler to run
+		call waitForVBlank ;and wait forever
 	jr crashHandler.loop
 		
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-.print8:
-	ld a, e
-	swap a
-	and $0F
-	add $F6
-	ldi [hl], a
-	ld a, e
-	and $0F
-	add $F6
-	ldi [hl], a
-	ret
+.print16: ;de = 16 bit number to print, hl = pointer to string
+	call crashHandler.print8 ;print upper byte first
+	ld d, e
+	jp crashHandler.print8 ;print lower byte
 
-.header:
-	db "Crash Screen :("
-	.end
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+.print8: ;d = byte to print, hl = pointer to string
+	ld a, d
+	swap a
+	and $0F ;get upper nibble
+	add $F6 ;tile ID of the "0" tile
+	ldi [hl], a ;save to string
+	ld a, d
+	and $0F ;lower nibble
+	add $F6 ;convert to text
+	ldi [hl], a ;save
+	ret
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
