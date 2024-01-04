@@ -949,50 +949,50 @@ crashHandler:
 	ldi [hl], a
 	ldi [hl], a
 	
-	ld hl, bkg_map + 2
+	ld hl, bkg_map + 32 + 2
 	ld de, crashHandler.header
 	ld c, crashHandler.end - crashHandler.header
 	rst $10
 	
-	debuggerPrint 2,1,"ROM"
+	debuggerPrint 2,3,"ROM"
 	pop de
 	call crashHandler.print8
 	
-	debuggerPrint 10,1,"RAM"
+	debuggerPrint 10,3,"RAM"
 	ld a, d
 	and $07
 	ld e, a
 	call crashHandler.print8
 	
-	debuggerPrint 2,2,"AF"
+	debuggerPrint 1,4,"AF"
 	ld a, [$C000]
 	ld e, a
 	call crashHandler.print8
 	pop de
 	call crashHandler.print8
 	
-	debuggerPrint 10,2,"BC"
+	debuggerPrint 11,4,"BC"
 	pop bc
 	ld e, b
 	call crashHandler.print8
 	ld e, c
 	call crashHandler.print8
 	
-	debuggerPrint 2,3,"DE"
+	debuggerPrint 1,5,"DE"
 	pop bc
 	ld e, b
 	call crashHandler.print8
 	ld e, c
 	call crashHandler.print8
 	
-	debuggerPrint 10,3,"HL"
+	debuggerPrint 11,5,"HL"
 	pop bc
 	ld e, b
 	call crashHandler.print8
 	ld e, c
 	call crashHandler.print8
 	
-	debuggerPrint 2,4,"SP"
+	debuggerPrint 1,6,"SP"
 	ld bc, $C001
 	ld a, [bc]
 	add $02
@@ -1013,7 +1013,7 @@ crashHandler:
 	ld h, [hl]
 	ld l, a
 	ld sp, hl
-	debuggerPrint 10,4,"PC"
+	debuggerPrint 11,6,"PC"
 	pop bc
 	dec bc
 	ld e, b
@@ -1021,7 +1021,7 @@ crashHandler:
 	ld e, c
 	call crashHandler.print8
 	
-	debuggerPrint 2,5,"ACTOR"
+	debuggerPrint 2,8,"ACTOR"
 	ld sp, $CFFE
 	pop bc
 	inc bc
