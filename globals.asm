@@ -30,18 +30,26 @@ last_played_song:
 	ds $01
 last_played_difficulty:
 	ds $01
+last_selected_option:
+	ds $01
 character:
 	ds $01
 note_speed:
 	ds $01
 color_scheme:
 	ds $01
+key_bindings:
+	ds $03
 note_skin:
 	ds $01
 sort_method:
 	ds $01
+input_delay:
+	ds $01
+leadin_time:
+	ds $02
 .padding:
-	ds $EA
+	ds $E2
 ENDU
 
 current_score:
