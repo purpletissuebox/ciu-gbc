@@ -1042,11 +1042,6 @@ crashHandler:
 	
 	ld a, $01
 	ldh [$FFFF], a
-	.waitAgain:
-		ldh a, [$FF41]
-		and $03
-		dec a
-	jr nz, crashHandler.waitAgain
 	ld a, $81
 	ldh [$FF40], a
 	ei
