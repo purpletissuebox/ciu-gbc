@@ -83,12 +83,9 @@ menuHUD:
 	jr nz, menuHUD.diffLoop ;loop until we hit the 8th tile (4th difficulty)
 	
 	pop de ;now we have ebc = 24 bit score. hlda are all free to do work.
-	ld l, c
-	ld h, b
 	
-	call menuHUD.itoa24_daa ;convert to string and write to window
 	ld hl, shadow_wmap + SCORELOCATION
-	call menuHUD.print_bcd
+	call menuHUD.itoa24 ;convert to string and write to window
 	
 	;the final task is to display the arrows. the difficulty index is still saved in scratch ram
 	ld hl, shadow_wmap + ARROWLOCATION
