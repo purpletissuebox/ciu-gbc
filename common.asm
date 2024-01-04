@@ -822,12 +822,248 @@ retriggerOAM: ;scanline interrupt that loads extra sprites.
 	
 	restoreBank "ram" ;restore context
 	pop af
-	reti	
+	reti
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+debuggerPrint: MACRO ;x pos, y pos, string
+	ld hl, bkg_map + 32*(\2) + (\1)
+CHARINDEX = 1
+REPT STRLEN(\3)
+	ld a, STRSUB(\3, CHARINDEX,1)
+	ldi [hl], a
+CHARINDEX = CHARINDEX + 1
+ENDR
+	ld a, ":"
+	ldi [hl], a
+	ld a, " "
+	ldi [hl], a
+ENDM
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 crashHandler:
-	jr crashHandler
+	di
+	ld [$C000], a
+	ld [$C001], sp
+	ld sp, $C030
+	push hl
+	push de
+	push bc
+	push af
+	ldh a, [rom_bank]
+	ld l, a
+	ldh a, [$FF70]
+	ld h, a
+	push hl
+	
+	xor a
+	ldh [$FF26], a
+	
+	.waitLCD:
+		ldh a, [$FF41]
+		and $03
+		dec a
+	jr nz, crashHandler.waitLCD
+	ld a, $01
+	ldh [$FF40], a
+	
+	ld hl, init_data.alphabet_task
+	ldi a, [hl]
+	sub $A0
+	ldh [$FF52], a
+	ldi a, [hl]
+	sbc $00
+	ldh [$FF51], a
+	ldi a, [hl]
+	ld [$2000], a
+	ld a, $60
+	ldh [$FF54], a
+	ld a, $8F
+	ldh [$FF53], a
+	ld a, $3F + $0A
+	ldh [$FF55], a
+	
+	ld a, $01
+	ldh [$FF4F], a
+	
+	ld hl, bkg_attr
+	xor a
+	ld bc, $0340
+	.attr:
+		rst $08
+		dec b
+	jr nz, crashHandler.attr
+	
+	xor a
+	ldh [$FF4F], a
+	
+	ld hl, bkg_map
+	ld a, $3F
+	ld bc, $0340
+	.map:
+		rst $08
+		dec b
+	jr nz, crashHandler.map
+	
+	ld hl, oam_routine
+	ld [hl], $C9
+	
+	ld a, BANK(shadow_oam)
+	ldh [$FF70], a
+	ld a, $A7
+	ld hl, shadow_winloc + 1
+	ldd [hl], a
+	ldd [hl], a ;window position
+	xor a
+	ldd [hl], a
+	ldd [hl], a ;bkg scroll
+	
+	ld hl, vblank_jump
+	ld de, init_data.vblank_data
+	ld a, [de]
+	inc de
+	ldi [hl], a
+	ld a, [de]
+	inc de
+	add $18
+	ldi [hl], a
+	ld a, [de]
+	adc $00
+	ld [hl], a
+	
+	ld a, BANK(shadow_palettes)
+	ldh [$FF70], a
+	
+	ld hl, shadow_palettes
+	xor a
+	ldi [hl], a
+	ldi [hl], a
+	ldi [hl], a
+	ldi [hl], a
+	ld a, $10
+	ldi [hl], a
+	ld a, $42
+	ldi [hl], a
+	ld a, $FF
+	ldi [hl], a
+	ldi [hl], a
+	
+	ld hl, bkg_map + 2
+	ld de, crashHandler.header
+	ld c, crashHandler.end - crashHandler.header
+	rst $10
+	
+	debuggerPrint 2,1,"ROM"
+	pop de
+	call crashHandler.print8
+	
+	debuggerPrint 10,1,"RAM"
+	ld e, d
+	call crashHandler.print8
+	
+	debuggerPrint 2,2,"AF"
+	ld a, [$C000]
+	ld e, a
+	call crashHandler.print8
+	pop de
+	call crashHandler.print8
+	
+	debuggerPrint 10,2,"BC"
+	pop bc
+	ld e, b
+	call crashHandler.print8
+	ld e, c
+	call crashHandler.print8
+	
+	debuggerPrint 2,3,"DE"
+	pop bc
+	ld e, b
+	call crashHandler.print8
+	ld e, c
+	call crashHandler.print8
+	
+	debuggerPrint 10,3,"HL"
+	pop bc
+	ld e, b
+	call crashHandler.print8
+	ld e, c
+	call crashHandler.print8
+	
+	debuggerPrint 2,4,"SP"
+	ld bc, $C002
+	ld a, [bc]
+	dec bc
+	ld e, a
+	call crashHandler.print8
+	ld a, [bc]
+	ld e, a
+	call crashHandler.print8
+	
+	ld hl, $C001
+	ldi a, [hl]
+	ld h, [hl]
+	ld l, a
+	ld sp, hl
+	debuggerPrint 10,4,"PC"
+	pop bc
+	ld e, c
+	call crashHandler.print8
+	ld e, b
+	call crashHandler.print8
+	
+	debuggerPrint 2,5,"ACTOR"
+	ld sp, $CFFE
+	pop bc
+	inc bc
+	inc bc
+	ld a, [bc]
+	dec bc
+	ld e, a
+	call crashHandler.print8
+	ld a, ":"
+	ldi [hl], a
+	ld a, [bc]
+	dec bc
+	ld e, a
+	call crashHandler.print8
+	ld a, [bc]
+	ld e, a
+	call crashHandler.print8
+	
+	ld a, $01
+	ldh [$FFFF], a
+	.waitAgain:
+		ldh a, [$FF41]
+		and $03
+		dec a
+	jr nz, crashHandler.waitAgain
+	ld a, $81
+	ldh [$FF40], a
+	ei
+	.loop:
+		ld a, $FF
+		ldh [actors_done], a
+		call waitForVBlank
+	jr crashHandler.loop
+		
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+.print8:
+	ld a, e
+	swap a
+	and $0F
+	add $F6
+	ldi [hl], a
+	ld a, e
+	and $0F
+	add $F6
+	ldi [hl], a
+	ret
+
+.header:
+	db "Crash Screen :("
+	.end
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -922,7 +1158,7 @@ init_data:
 		jr nz, init_data.oamStall
 	ret
 	.oam_end
-	
+
 .alphabet_task:
 	GFXTASK letter_sprites, sprite_tiles0, $0000
 
@@ -941,6 +1177,9 @@ manager_list:
 	
 SECTION "TEXT TILES", ROMX
 	align 4
+	number_tiles:
+		INCBIN "../assets/gfx/sprites/numberSprites.bin"
+		.end
 	letter_sprites:
 		INCBIN "../assets/gfx/sprites/alphabetSprites.bin"
 		.end
