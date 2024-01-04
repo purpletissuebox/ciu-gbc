@@ -959,7 +959,9 @@ crashHandler:
 	call crashHandler.print8
 	
 	debuggerPrint 10,1,"RAM"
-	ld e, d
+	ld a, d
+	and $07
+	ld e, a
 	call crashHandler.print8
 	
 	debuggerPrint 2,2,"AF"
@@ -991,8 +993,14 @@ crashHandler:
 	call crashHandler.print8
 	
 	debuggerPrint 2,4,"SP"
-	ld bc, $C002
+	ld bc, $C001
 	ld a, [bc]
+	add $02
+	ld [bc], a
+	inc bc
+	ld a, [bc]
+	adc $00
+	ld [bc], a
 	dec bc
 	ld e, a
 	call crashHandler.print8
@@ -1007,9 +1015,10 @@ crashHandler:
 	ld sp, hl
 	debuggerPrint 10,4,"PC"
 	pop bc
-	ld e, c
-	call crashHandler.print8
+	dec bc
 	ld e, b
+	call crashHandler.print8
+	ld e, c
 	call crashHandler.print8
 	
 	debuggerPrint 2,5,"ACTOR"
