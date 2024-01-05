@@ -826,22 +826,6 @@ retriggerOAM: ;scanline interrupt that loads extra sprites.
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-debuggerPrint: MACRO ;x pos, y pos, string
-	ld hl, bkg_map + 32*(\2) + (\1) ;hl points to the tile at coordinates (\1, \2)
-CHARINDEX = 1
-REPT STRLEN(\3) ;for each character in the string
-	ld a, STRSUB(\3, CHARINDEX,1) ;put the tile ID of that character into a
-	ldi [hl], a ;save to the string
-CHARINDEX = CHARINDEX + 1
-ENDR
-	ld a, ":"
-	ldi [hl], a
-	ld a, " "
-	ldi [hl], a ;print ": " for readability
-ENDM
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
 crashHandler: ;we got here from rst $FF
 	di
 	ld [$C000], sp ;in order to preserve regsiters, we need the stack. so first preserve the stack.
@@ -946,41 +930,53 @@ crashHandler: ;we got here from rst $FF
 	ldi [hl], a
 	ldi [hl], a ;create palette. the other ones are still garbage but we don't use them
 	
-	debuggerPrint 2,1, "! Crash Screen !  "
+	ld bc, crashHandler.strings
 	
-	;the temporary stack contains (in order): RAM/ROM, AF, BC, DE, HL.	
-	debuggerPrint 2,3,"ROM"
+	ld hl, bkg_map + 32*1 + 2
+	call crashHandler.strcpy
+	
+	;the temporary stack contains (in order): RAM/ROM, AF, BC, DE, HL.
+	ld hl, bkg_map + 32*3 + 2
+	call crashHandler.strcpy
 	pop de ;d contains rom bank, e contains ram bank
 	call crashHandler.print8
 	
-	debuggerPrint 10,3,"RAM"
+	ld hl, bkg_map + 32*3 + 10
+	call crashHandler.strcpy
 	ld a, e
 	and $07 ;the hardware register writes 1s to the unused bits, which we dont want to see
 	ld d, a
 	call crashHandler.print8
 	
-	debuggerPrint 1,4,"AF"
+	ld hl, bkg_map + 32*4 + 1
+	call crashHandler.strcpy
 	pop de
 	call crashHandler.print16
-	debuggerPrint 11,4,"BC"
+	
+	ld hl, bkg_map + 32*4 + 11
+	call crashHandler.strcpy
 	pop de
 	call crashHandler.print16
-	debuggerPrint 1,5,"DE"
+	
+	ld hl, bkg_map + 32*5 + 1
+	call crashHandler.strcpy
 	pop de
 	call crashHandler.print16
-	debuggerPrint 11,5,"HL"
+	
+	ld hl, bkg_map + 32*5 + 11
+	call crashHandler.strcpy
 	pop de
 	call crashHandler.print16 ;print the cpu registers
 	
-	debuggerPrint 1,6,"SP"
-	ld bc, $C000 ;we saved sp to this address earlier. however, the value located there has the rst vector itself on the stack, too.
-	ld a, [bc]
-	add $02 ;to account for this, add 2 before we print it.
+	ld hl, $C000 ;we saved sp to this address earlier. however, the value located there has the rst vector itself on the stack, too.
+	ldi a, [hl]
+	add $02
 	ld e, a
-	inc bc
-	ld a, [bc]
+	ld a, [hl]
 	adc $00
-	ld d, a
+	ld d, a ;to account for this, add 2 before we print it.
+	ld hl, bkg_map + 32*6 + 1
+	call crashHandler.strcpy
 	call crashHandler.print16
 	
 	ld hl, $C000
@@ -988,12 +984,14 @@ crashHandler: ;we got here from rst $FF
 	ld h, [hl]
 	ld l, a
 	ld sp, hl ;annoyingly, you can save sp to an arbitrary location, but not read it back. so we go through hl.
-	debuggerPrint 11,6,"PC"
+	ld hl, bkg_map + 32*6 + 11
+	call crashHandler.strcpy
 	pop de ;retrieve the return address from the rst
 	dec de ;so the address of the instruction itself was 1 before that
 	call crashHandler.print16
 	
-	debuggerPrint 2,8,"ACTOR"
+	ld hl, bkg_map + 32*8 + 2
+	call crashHandler.strcpy
 	ld sp, $CFFE ;the first thing to get pushed is the address of the actor in the linked list.
 	pop bc
 	inc bc
@@ -1009,14 +1007,19 @@ crashHandler: ;we got here from rst $FF
 	ld e, a
 	ld a, [bc]
 	ld d, a
-	call crashHandler.print16 ;print address of main function
+	call crashHandler.print16 ;print address of actor's main function by dereferencing the pointer
 	
-	debuggerPrint 2,9,"ADDRESS "
+	push bc
 	ld e, c
-	ld d, b
-	call crashHandler.print16 ;print address of the node itself, which is still in bc
+	ld d, b ;the pointer to the actor itself is still in bc
+	ld bc, crashHandler.final_strings
+	ld hl, bkg_map + 32*9 + 2
+	call crashHandler.strcpy
+	call crashHandler.print16
 	
-	debuggerPrint 2,10,"LOCAL MEMORY"
+	ld hl, bkg_map + 32*10 + 2
+	call crashHandler.strcpy
+	pop bc
 	
 	ld hl, bkg_map + 32*11 + 2 ;hl points to the "string" we are writing to
 	ld a, $06 ;number of rows to print
@@ -1053,6 +1056,33 @@ crashHandler: ;we got here from rst $FF
 		call waitForVBlank ;and wait forever
 	jr crashHandler.loop
 		
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+.strings:
+	db "! CRASH SCREEN !", $FF
+	db "ROM: ", $FF
+	db "RAM: ", $FF
+	db "AF: ", $FF
+	db "BC: ", $FF
+	db "DE: ", $FF
+	db "HL: ", $FF
+	db "SP: ", $FF
+	db "PC: ", $FF
+	db "ACTOR   ", $FF
+.final_strings:
+	db "AT ADDRESS ", $FF
+	db "LOCAL MEMORY:", $FF
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+.strcpy:
+	ld a, [bc]
+	inc bc
+	cp $FF
+		ret z
+	ldi [hl], a
+jr crashHandler.strcpy
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 .print16: ;de = 16 bit number to print, hl = pointer to string
