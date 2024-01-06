@@ -5,6 +5,8 @@ SECTION "SETTINGS INPUT", ROMX
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 CURRENTOPTION = $0004
+NUMOPTIONS = $09
+NUMVISIBLE = $06
 
 settingsInput:
 .init:
@@ -12,8 +14,14 @@ settingsInput:
 	ld hl, CURRENTOPTION
 	add hl, bc
 	ld a, [last_selected_option]
-	ld [hl], a
+	ldi [hl], a
+	inc hl
+	ldd [hl], a
+	ld [hl], $00
 	restoreBank "ram"
+	
+	ld de, settingsInput.bkg_actor
+	call spawnActorV
 	
 	updateActorMain settingsInput.main
 	ret
@@ -69,10 +77,23 @@ settingsInput:
 	ld hl, CURRENTOPTION
 	add hl, bc
 	ld a, [hl]
-	dec a
-	and $07
+	sub $01
+	ret c
+	
 	ldi [hl], a
-	ret
+	ld a, [hl]
+	sub $01
+		jr c, settingsInput.fixBkgUp
+	ld [hl], a
+	ld de, settingsInput.arrow_actor
+	jp spawnActorV
+	
+	.fixBkgUp:
+	inc hl
+	dec [hl]
+	ld a, [hl]
+	ld de, settingsInput.bkg_actor
+	jp spawnActorV
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -82,9 +103,24 @@ settingsInput:
 	add hl, bc
 	ld a, [hl]
 	inc a
-	and $07
+	cp NUMOPTIONS
+	ret z
+	
 	ldi [hl], a
-	ret
+	ld a, [hl]
+	inc a
+	cp NUMVISIBLE
+		jr z, settingsInput.fixBkgDown
+	ld [hl], a
+	ld de, settingsInput.arrow_actor
+	jp spawnActorV
+	
+	.fixBkgDown:
+	inc hl
+	inc [hl]
+	ld a, [hl]
+	ld de, settingsInput.bkg_actor
+	jp spawnActorV
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -110,3 +146,8 @@ settingsInput:
 
 .wipe_actor:
 	NEWACTOR settingsScroll, $80
+
+.arrow_actor:
+	NEWACTOR settingsCursor, $FF
+.bkg_actor:
+	NEWACTOR settingsMenu, $FF
