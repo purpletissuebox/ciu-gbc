@@ -309,9 +309,7 @@ setColorsOBJ:
 	FADEENTRY $08, $50, "up", text_colors_menu, $00
 
 .actor_table:
-	dw dummy_actor
-	db $01
-	db $FF
+	NEWACTOR dummyActor, $FF
 	;NEWACTOR characterScroller.insert,$00
 
 text_colors:
