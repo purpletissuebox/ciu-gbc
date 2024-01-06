@@ -78,10 +78,10 @@ menuHUDInit:
 	NEWACTOR menuHUD, $FF
 
 .hud_tasks:
-	GFXTASK hud_tiles0, menu_text0, $0000
-	GFXTASK hud_tiles1, menu_text1, $0000
-	GFXTASK shadow_wmap, win_map, $0000
-	GFXTASK shadow_wattr, win_attr, $0000
+	GFXTASK hud_tiles0, menu_text0
+	GFXTASK hud_tiles1, menu_text1
+	GFXTASK shadow_wmap, win_map
+	GFXTASK shadow_wattr, win_attr
 	.end
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

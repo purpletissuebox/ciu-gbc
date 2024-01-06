@@ -70,8 +70,16 @@ submitGraphicsTask: ;bc = submitting actor
 GFXTASK: MACRO
 	dw ((BANK(\1) & $07) | (\1)) ;source address + ram bank (lower bits are a don't care for rom copies)
 	db BANK(\1)                  ;source's rom bank (don't care for ram copies)
-	dw (\2 + \3) | BANK(\2)      ;destination region + address in vram
+IF _NARG > 2
+	dw (\2 + \3) | BANK(\2)      ;destination region + address in vram with optional offset
+ELSE
+	dw (\2) | BANK (\2)
+ENDC
+IF _NARG > 3
+	dw (\4) - 1
+ELSE
 	db ((\1.end - \1) >> 4) - 1  ;calculate size based on ".end" tag
+ENDC
 	db $FF                       ;padding
 	db $FF                       ;padding
 ENDM

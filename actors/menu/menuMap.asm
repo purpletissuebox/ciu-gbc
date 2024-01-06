@@ -211,4 +211,4 @@ menuMap:
 	db (((menu_G_chunks - bkg_tiles0) >> 4) ^ $80), (((menu_O_chunks - bkg_tiles0) >> 4) ^ $80), (((menu_Y_chunks - bkg_tiles0) >> 4) ^ $80), (((menu_P_chunks - bkg_tiles0) >> 4) ^ $80)
 	
 .task:
-	GFXTASK shadow_map, bkg_map, $0000
+	GFXTASK shadow_map, bkg_map

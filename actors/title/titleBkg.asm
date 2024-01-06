@@ -34,13 +34,13 @@ loadTitleTiles:
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 	
 .gfx_tasks:
-	GFXTASK titleTiles1, bkg_tiles0, $0000
+	GFXTASK titleTiles1, bkg_tiles0
 	GFXTASK titleTiles2, bkg_tiles0, $0400
 	GFXTASK titleTiles3, bkg_tiles0, $0800
 	GFXTASK titleTiles4, bkg_tiles0, $0C00
 	GFXTASK titleTiles5, bkg_tiles1, $0800
-	GFXTASK titleMap, bkg_map, $0000
-	GFXTASK titleAttr, bkg_attr, $0000
+	GFXTASK titleMap, bkg_map
+	GFXTASK titleAttr, bkg_attr
 	.end
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

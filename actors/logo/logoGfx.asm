@@ -35,11 +35,11 @@ loadLogoGraphics:
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 .gfx_tasks:
-	GFXTASK tissue_tiles1, bkg_tiles0, $0000
+	GFXTASK tissue_tiles1, bkg_tiles0
 	GFXTASK tissue_tiles2, bkg_tiles0, $0600
-	GFXTASK tissue_tiles3, bkg_tiles1, $0000
-	GFXTASK tissue_map, bkg_map, $0000
-	GFXTASK tissue_attr, bkg_attr, $0000
+	GFXTASK tissue_tiles3, bkg_tiles1
+	GFXTASK tissue_map, bkg_map
+	GFXTASK tissue_attr, bkg_attr
 	.end
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

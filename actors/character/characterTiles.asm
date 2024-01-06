@@ -40,10 +40,10 @@ characterTiles:
 	GFXTASK character_tiles2, bkg_tiles0, $0C00
 	GFXTASK character_tiles3, bkg_tiles1, $0800
 	GFXTASK character_tiles4, bkg_tiles1, $0C00
-	GFXTASK character_map1, bkg_map, $0000
-	GFXTASK character_attr1, bkg_attr, $0000
-	GFXTASK character_map2, win_map, $0000
-	GFXTASK character_attr2, win_attr, $0000
+	GFXTASK character_map1, bkg_map
+	GFXTASK character_attr1, bkg_attr
+	GFXTASK character_map2, win_map
+	GFXTASK character_attr2, win_attr
 	.end
 	
 .character_text:

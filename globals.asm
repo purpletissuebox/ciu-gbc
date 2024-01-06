@@ -208,30 +208,12 @@ shadow_map:
 shadow_attr:
 	ds $400 ;backup bkg attr that can be manipulated out of vblank
 	.end
-UNION
 shadow_wmap:
 	ds $400 ;backup win map that can be manipulated out of vblank
 	.end
-NEXTU
-shadow_whud_map:
-	ds $040
-	.end
-shadow_wsettings_map:
-	ds $3C0
-	.end
-ENDU
-UNION
 shadow_wattr:
 	ds $400 ;backup win attr that can be manipulated out of vblank
 	.end
-NEXTU
-shadow_whud_attr:
-	ds $040
-	.end
-shadow_wsettngs_attr:
-	ds $3C0
-	.end
-ENDU
 	
 SECTION "SAVEGAME", SRAM
 save_string_S:

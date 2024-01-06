@@ -182,7 +182,7 @@ init_data:
 	.oam_end
 
 .alphabet_task:
-	GFXTASK letter_sprites, sprite_tiles0, $0000
+	GFXTASK letter_sprites, sprite_tiles0
 
 .actor_data:
 	dw ACTORHEAP
