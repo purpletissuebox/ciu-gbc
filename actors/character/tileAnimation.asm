@@ -132,7 +132,7 @@ tileAnimation:
 	NEWACTOR tileAnimation.init, $B0
 	
 .arrow_task:
-	GFXTASK animated_tiles, bkg_tiles0
+	GFXTASK animated_tiles, $0000, bkg_tiles0, $0000
 
 align 6
 arrow_tiles:

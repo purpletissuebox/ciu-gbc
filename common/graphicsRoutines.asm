@@ -66,20 +66,16 @@ submitGraphicsTask: ;bc = submitting actor
 	inc [hl] ;indicate success to the actor
 	.tooMany:
 	reti
-	
+
 GFXTASK: MACRO
-	dw ((BANK(\1) & $07) | (\1)) ;source address + ram bank (lower bits are a don't care for rom copies)
-	db BANK(\1)                  ;source's rom bank (don't care for ram copies)
-IF _NARG > 2
-	dw (\2 + \3) | BANK(\2)      ;destination region + address in vram with optional offset
+	dw (\1 + \2) | (BANK(\1) & $07) ;source address + ram bank (lower bits are a don't care for rom copies)
+	db BANK(\1)                     ;source's rom bank (don't care for ram copies)
+	dw (\3 + \4) | BANK(\3)         ;destination region + address in vram
+IF _NARG > 4
+	dw (\5) - 1                     ;explicit size provided
 ELSE
-	dw (\2) | BANK (\2)
+	db ((\1.end - \1) >> 4) - 1     ;calculate size based on ".end" tag
 ENDC
-IF _NARG > 3
-	dw (\4) - 1
-ELSE
-	db ((\1.end - \1) >> 4) - 1  ;calculate size based on ".end" tag
-ENDC
-	db $FF                       ;padding
-	db $FF                       ;padding
+	db $FF                          ;padding
+	db $FF                          ;padding
 ENDM

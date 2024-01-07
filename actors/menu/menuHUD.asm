@@ -277,9 +277,9 @@ menuHUD:
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 .win_task:
-	GFXTASK shadow_wmap, win_map, $0000, $04
+	GFXTASK shadow_wmap, $0000, win_map, $0000, $04
 .attr_task:
-	GFXTASK shadow_wattr, win_attr, $0000, $04
+	GFXTASK shadow_wattr, $0000, win_attr, $0000, $04
 
 .diffTable:
 	INCBIN "../assets/code/difficultyTable.bin"

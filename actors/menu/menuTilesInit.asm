@@ -420,9 +420,9 @@ menuTilesInit:
 	.end3
 	
 .map:
-	GFXTASK menu_map, bkg_map
+	GFXTASK menu_map, $0000, bkg_map, $0000
 .attr:
-	GFXTASK shadow_attr, bkg_attr
+	GFXTASK shadow_attr, $0000, bkg_attr, $0000
 	
 INCLUDE "../actors/menu/menuAttributes.asm"	
 
