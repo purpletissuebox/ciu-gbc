@@ -77,7 +77,7 @@ settingsMenu:
 	jr c, settingsMenu.printLoop
 	
 	ld a, b
-	ld hl, shadow_wmap + 32*13 + 4
+	ld hl, shadow_wmap + 32*11 + 6
 	ld de, settingsMenu.footer
 	cp LISTEND
 	jr nz, settingsMenu.footerPresent
@@ -134,16 +134,18 @@ ENDR
 .blank:     db "        ", $00
 
 .string_00: db "scroll speed", $00
-.string_01: db "note skin", $00
+.string_01: db "note skin   ", $00
 .string_02: db "key bindings", $00
-.string_03: db "sort method", $00
-.string_04: db "input delay", $00
+.string_03: db "sort method ", $00
+.string_04: db "input delay ", $00
 .string_05: db "lead in time", $00
-.string_06: db "background", $00
+.string_06: db "background  ", $00
 .string_07: db "color scheme", $00
-.string_08: db "judgement", $00
+.string_08: db "judgement   ", $00
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+SECTION "SETTINGS CURSOR", ROMX
 
 settingsCursor:
 	swapInRam shadow_wmap
@@ -173,8 +175,11 @@ settingsCursor:
 	
 	restoreBank "ram"
 	
-	ld e, c
-	ld d, b
-	jp removeActor
+	ld de, settingsMenu.task
+	call loadGraphicsTask
+	updateActorMain settingsMenu.submit
+	jp settingsMenu.submit
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 	
 POPC
