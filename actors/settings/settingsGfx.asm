@@ -46,6 +46,19 @@ settingsMenu:
 	
 	ld c, $00
 	.printLoop:
+		ld hl, settingsMenu.strings
+		ld a, b
+		add a
+		add l
+		ld l, a
+		ld a, h
+		adc $00
+		ld h, a
+		
+		ldi a, [hl]
+		ld e, a
+		ld d, [hl]		
+		
 		ld hl, shadow_wmap + 32*5 + 4
 		ld a, c
 		swap a
@@ -55,15 +68,6 @@ settingsMenu:
 		ld a, h
 		adc $00
 		ld h, a
-		
-		ld de, settingsMenu.strings
-		ld a, b
-		add a
-		add e
-		ld e, a
-		ld a, d
-		adc $00
-		ld d, a
 		
 		call settingsMenu.strcpy
 		inc b
@@ -114,7 +118,7 @@ settingsMenu:
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 .task:
-	GFXTASK shadow_wmap, win_map, $0080, $10
+	GFXTASK shadow_wmap, $0080, win_map, $0080, $10
 
 STRINGID = 0
 .strings:
