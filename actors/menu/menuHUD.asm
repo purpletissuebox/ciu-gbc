@@ -10,7 +10,7 @@ NUMTASKS = $000A
 SCORELOCATION = $0021
 ARROWLOCATION = $002A
 DIFFLOCATION = $002B
-ARROWTILE = $21
+ARROWTILE = $20
 ZEROTILE = $23
 BLANKTILE = $1F
 
@@ -102,12 +102,9 @@ menuHUD:
 		cp d
 		jr nz, menuHUD.blank
 			ld [hl], b
-			set 2, h
-			ld [hl], $87
+			inc b
 			inc hl
 			inc hl
-			ld [hl], $A7
-			res 2, h
 			ld [hl], b
 		.blank:
 		inc hl
@@ -120,23 +117,19 @@ menuHUD:
 	restoreBank "ram"
 	restoreBank "ram"
 	pop bc
+	ld de, menuHUD.win_task
+	call loadGraphicsTask ;the contents of memory will change per song but the location is fixed. go ahead and load it now.
 	updateActorMain menuHUD.submit
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 .submit:
-	ld de, menuHUD.win_task
-	call loadGraphicsTask ;the contents of memory will change per song but the location is fixed. go ahead and load it now.
 	call submitGraphicsTask ;submit task until it goes through
-	ld de, menuHUD.attr_task
-	call loadGraphicsTask
-	call submitGraphicsTask
 	
 	ld hl, NUMTASKS
 	add hl, bc
 	ld a, [hl]
-	ld [hl], $00
-	sub $02
+	dec a
 	ret nz
 	
 	ld e, c
@@ -277,9 +270,7 @@ menuHUD:
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 .win_task:
-	GFXTASK shadow_wmap, $0000, win_map, $0000, $04
-.attr_task:
-	GFXTASK shadow_wattr, $0000, win_attr, $0000, $04
+	GFXTASK shadow_wmap, $0020, win_map, $0020, $02
 
 .diffTable:
 	INCBIN "../assets/code/difficultyTable.bin"
