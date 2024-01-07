@@ -200,8 +200,9 @@ rst_30:
 	ret
 	ds 7, $00
 rst_38:
+	ld a, BANK(crashHandler)
+	ld [$2000], a
 	jp crashHandler
-	ds 5, $00
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;interrupt jumps
