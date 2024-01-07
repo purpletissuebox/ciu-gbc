@@ -4,8 +4,8 @@ SECTION "SUBMENU LEADIN", ROMX
 ;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-CURRENTDIGIT = $0004
-DIGITS = $0005
+CURRENTDIGIT = $0010
+DIGITS = $0011
 
 PUSHC
 SETCHARMAP settingsChars
@@ -130,7 +130,7 @@ submenuLeadin:
 	ld a, [hl]
 	sub $01
 	ld [hl], a
-	jr c, submenuLeadin.wrapDown
+	jr nc, submenuLeadin.wrapDown
 		ld [hl], $09
 	.wrapDown:
 	jp submenuLeadin.renderDigits
@@ -205,20 +205,20 @@ submenuLeadin:
 	swapInRam shadow_wmap
 	ld hl, DIGITS
 	add hl, bc
-	ld de, shadow_wmap + 32*15 + 12
+	ld de, shadow_wmap + 32*15 + 15
 	
 	ldi a, [hl]
 	add "0"
 	ld [de], a
-	inc de
+	dec de
 	ldi a, [hl]
 	add "0"
 	ld [de], a
-	inc de
+	dec de
 	ldi a, [hl]
 	add "0"
 	ld [de], a
-	inc de
+	dec de
 	ldi a, [hl]
 	add "0"
 	ld [de], a
@@ -239,8 +239,8 @@ submenuLeadin:
 	ldi [hl], a
 	ld [hl], a
 	
-	ld a, d
-	sbc l
+	ld a, l
+	sub d
 	ld l, a
 	ld a, h
 	sbc $00
@@ -267,6 +267,7 @@ submenuLeadin:
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 .itoa14:
+	xor a
 	add hl, hl
 	add hl, hl ;2
 	
@@ -290,7 +291,7 @@ submenuLeadin:
 	
 	ld l, $07
 	.phase3:
-		add hl, hl ;16
+		sla h ;16
 		ld a, e
 		adc a
 		daa
@@ -341,6 +342,7 @@ submenuLeadin:
 		xor d
 		and $0F
 		xor d
+		ld d, a
 		
 		dec l
 	jr nz, submenuLeadin.nibble1
@@ -392,8 +394,12 @@ submenuLeadin:
 		
 		dec d
 	jr nz, submenuLeadin.nibble3
-	ld e, l
-	ld d, h	
+	
+	ld a, e
+	or l
+	swap a
+	ld d, a
+	ld e, h	
 	ret
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;	
