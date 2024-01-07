@@ -1,7 +1,7 @@
 SECTION "SETTINGS SCROLL", ROMX
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;
+;smoothly pulls the settings menu on or off the screen.
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 VARIABLE = $0003
@@ -12,9 +12,9 @@ settingsScroll:
 	ld hl, VARIABLE
 	add hl, bc
 	ldi a, [hl]
-	and $80
+	and $80 ;use the topmost bit as a direction indicator - 0 = up and 1 = down
 	rrca
-	rrca
+	rrca ;convert to a starting index, 0 for up and 32 for down
 	ld [hl], a
 	updateActorMain settingsScroll.main
 	
@@ -25,8 +25,8 @@ settingsScroll:
 	add hl, bc
 	ld a, [hl]
 	inc a
-	ld [hl], a
-	and $1F
+	ld [hl], a ;increment timer
+	and $1F ;after 31 frames, exit
 	jr nz, settingsScroll.doScroll
 		ld e, c
 		ld d, b
@@ -39,11 +39,11 @@ settingsScroll:
 	ld e, a
 	ld a, d
 	adc $00
-	ld d, a
+	ld d, a ;de points to the current frame's scroll amount
 	
 	swapInRam shadow_winloc
 	ld a, [de]
-	ld [shadow_winloc], a
+	ld [shadow_winloc], a ;save it to the global scroll
 	restoreBank "ram"
 	ret
 
