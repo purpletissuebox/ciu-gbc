@@ -14,14 +14,7 @@ LISTEND = $09
 NUMVISIBLE = $06
 
 PUSHC
-NEWCHARMAP temp
-SETCHARMAP temp
-
-CHARINDEX = 0
-REPT 43
-CHARMAP STRSUB("abcdefghijklmnopqrstuvwxyz/-| >[*0123456789", CHARINDEX+1, 1), CHARINDEX+2
-CHARINDEX = CHARINDEX + 1
-ENDR
+SETCHARMAP settingsChars
 
 settingsMenu:
 	push bc

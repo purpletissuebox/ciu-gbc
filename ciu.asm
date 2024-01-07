@@ -1,7 +1,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;set up character map
-NEWCHARMAP ciuChars
-SETCHARMAP ciuChars
+NEWCHARMAP spriteChars
+SETCHARMAP spriteChars
 
 CHARMAP "\n", $40
 CHARMAP "\t", $80
@@ -11,6 +11,18 @@ REPT 64
 CHARMAP STRSUB("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz.,'\"!?:;/() ", CHARINDEX+1, 1), CHARINDEX
 CHARINDEX = CHARINDEX + 1
 ENDR
+
+NEWCHARMAP settingsChars
+SETCHARMAP settingsChars
+CHARMAP "\n", $00
+
+CHARINDEX = 0
+REPT 43
+CHARMAP STRSUB("abcdefghijklmnopqrstuvwxyz/-| []*0123456789", CHARINDEX+1, 1), CHARINDEX+2
+CHARINDEX = CHARINDEX + 1
+ENDR
+
+SETCHARMAP spriteChars
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;data structure macros
