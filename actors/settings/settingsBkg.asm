@@ -33,7 +33,7 @@ settingsBkg:
 	jr nz, settingsBkg.headerPresent ;if we are not already at the top of the menu, print a message saying there are more options above.
 		ld de, settingsBkg.blank ;otherwise there are no more options and we print nothing.
 	.headerPresent:
-	call settingsBkg.strcpy
+	rst $20
 	
 	;then render the options in order
 	ld c, $00 ;b = current string ID, c = number of strings we have rendered so far
@@ -61,7 +61,7 @@ settingsBkg:
 		adc $00
 		ld h, a ;hl points to the background where we are loading the string
 		
-		call settingsBkg.strcpy
+		rst $20
 		inc b ;increment string ID
 		inc c ;increment which row it will go on
 		ld a, c
@@ -76,7 +76,7 @@ settingsBkg:
 	jr nz, settingsBkg.footerPresent ;if we are not on the last option, print a message saying there are more options below.
 		ld de, settingsBkg.blank ;otherwise there are no more options and we print nothing.
 	.footerPresent:
-	call settingsBkg.strcpy
+	rst $20
 	
 	restoreBank "ram"	
 	pop bc
@@ -97,16 +97,6 @@ settingsBkg:
 	ld e, c
 	ld d, b
 	jp removeActor ;otherwise we are done
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-.strcpy: ;de = source string, hl = destination
-	ld a, [de]
-	inc de
-		and a
-		ret z ;copy until we hit a zero byte signifying end of string
-	ldi [hl], a
-	jr settingsBkg.strcpy
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
