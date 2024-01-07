@@ -10,9 +10,9 @@ NUMTASKS = $000A
 SCORELOCATION = $0021
 ARROWLOCATION = $002A
 DIFFLOCATION = $002B
-ARROWTILE = $20
-ZEROTILE = $23
-BLANKTILE = $1F
+
+PUSHC
+SETCHARMAP settingsChars
 
 menuHUD:
 	push bc
@@ -75,7 +75,7 @@ menuHUD:
 	.diffLoop:
 		ld a, [de] ;get difficulty
 		inc de
-		add ZEROTILE ;convert it into a tile ID
+		add "0" ;convert it into a tile ID
 		ldi [hl], a ;save to window
 		inc hl
 		ld a, l
@@ -95,7 +95,7 @@ menuHUD:
 	ld d, a
 	ld e, $04
 	xor a
-	ld bc, (ARROWTILE << 8) | BLANKTILE
+	ld bc, ("[" << 8) | " "
 	
 	.arrowLoop:
 		ld [hl], c
@@ -143,7 +143,7 @@ menuHUD:
 	;then, the remaining part is negative so we can add the next power of 10 until the integer overflows.
 	;this method results in one more addition or subtraction than is necessary. so we simply start counting the additions at -1 and subtractions at 10.
 	
-	ld d, ZEROTILE - 1
+	ld d, "0" - 1
 	.n10000000:
 		ld a, c
 		sub $80
@@ -162,7 +162,7 @@ menuHUD:
 	ld a, d
 	ldi [hl], a
 	
-	ld d, ZEROTILE + 10
+	ld d, "0" + 10
 	.n1000000:
 		ld a, c
 		add $40
@@ -181,7 +181,7 @@ menuHUD:
 	ld a, d
 	ldi [hl], a
 	
-	ld d, ZEROTILE - 1
+	ld d, "0" - 1
 	.n100000:
 		ld a, c
 		sub $A0
@@ -200,7 +200,7 @@ menuHUD:
 	ld a, d
 	ldi [hl], a
 	
-	ld d, ZEROTILE + 10
+	ld d, "0" + 10
 	.n10000:
 		ld a, c
 		add $10
@@ -219,7 +219,7 @@ menuHUD:
 	ld a, d
 	ldi [hl], a
 	
-	ld d, ZEROTILE - 1
+	ld d, "0" - 1
 	.n1000:
 		ld a, c
 		sub $E8
@@ -234,7 +234,7 @@ menuHUD:
 	ld a, d
 	ldi [hl], a
 	
-	ld d, ZEROTILE + 10
+	ld d, "0" + 10
 	.n100:
 		ld a, c
 		add $64
@@ -249,7 +249,7 @@ menuHUD:
 	ld a, d
 	ldi [hl], a
 	
-	ld d, ZEROTILE - 1
+	ld d, "0" - 1
 	.n10:
 		ld a, c
 		sub $0A
@@ -262,7 +262,7 @@ menuHUD:
 	
 	;for the last loop, instead of counting how many times we add 1 (i.e. we calculate 1*n), we can just use the number itself.
 	ld a, c
-	add ZEROTILE + 10
+	add "0" + 10
 	ldi [hl], a
 	
 	ret
@@ -274,3 +274,5 @@ menuHUD:
 
 .diffTable:
 	INCBIN "../assets/code/difficultyTable.bin"
+	
+POPC
