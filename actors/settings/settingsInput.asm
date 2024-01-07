@@ -11,6 +11,7 @@ NUMVISIBLE = $06
 settingsInput:
 .init:
 	swapInRam save_file
+	
 	ld hl, CURRENTOPTION
 	add hl, bc
 	ld a, [last_selected_option]
@@ -18,11 +19,10 @@ settingsInput:
 	inc hl
 	ldd [hl], a
 	ld [hl], $00
-	restoreBank "ram"
-	
 	ld de, settingsInput.bkg_actor
 	call spawnActorV
 	
+	restoreBank "ram"
 	updateActorMain settingsInput.main
 	ret
 
@@ -66,9 +66,7 @@ settingsInput:
 	bit 0, a
 	ret z
 		jp settingsInput.A
-	ld e, c
-	ld d, b
-	jp removeActor
+	ret
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
