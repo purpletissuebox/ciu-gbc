@@ -152,7 +152,7 @@ settingsCursor:
 	ld de, $0020
 	ld a, NUMVISIBLE
 	.loop:
-		ld [hl], d
+		ld [hl], " "
 		add hl, de
 		dec a
 	jr nz, settingsCursor.loop
