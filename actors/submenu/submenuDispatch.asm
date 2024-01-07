@@ -11,6 +11,7 @@ submenuDispatch:
 	add hl, bc
 	ld a, [hl]
 	add a
+	add a
 	
 	ld de, submenuDispatch.actor_table
 	add e
