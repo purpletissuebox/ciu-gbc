@@ -72,7 +72,7 @@ GFXTASK: MACRO
 	db BANK(\1)                     ;source's rom bank (don't care for ram copies)
 	dw (\3 + \4) | BANK(\3)         ;destination region + address in vram
 IF _NARG > 4
-	dw (\5) - 1                     ;explicit size provided
+	db (\5) - 1                     ;explicit size provided
 ELSE
 	db ((\1.end - \1) >> 4) - 1     ;calculate size based on ".end" tag
 ENDC
