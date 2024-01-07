@@ -151,6 +151,7 @@ settingsInput:
 	ld a, SUBMENU
 	ldh [scene], a ;block out future inputs
 	ld hl, CURRENTOPTION
+	add hl, bc
 	ld a, [hl]
 	ld de, settingsInput.submenu_actor ;spawn dispatcher using the current option as a variable
 	jp spawnActorV
