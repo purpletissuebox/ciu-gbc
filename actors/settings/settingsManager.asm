@@ -23,6 +23,5 @@ settingsManager:
 
 .actor_list:
 	NEWACTOR settingsScroll, $00
-	NEWACTOR settingsCursor, $00
 	NEWACTOR settingsInput, $FF
 	.end
