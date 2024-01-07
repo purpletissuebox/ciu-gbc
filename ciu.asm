@@ -146,6 +146,15 @@ INCLUDE "../actors/settings/settingsScroll.asm"
 INCLUDE "../actors/settings/settingsBkg.asm"
 INCLUDE "../actors/settings/settingsCursor.asm"
 INCLUDE "../actors/submenu/submenuDispatch.asm"
+INCLUDE "../actors/submenu/submenuBackground.asm"
+INCLUDE "../actors/submenu/submenuColors.asm"
+INCLUDE "../actors/submenu/submenuDelay.asm"
+INCLUDE "../actors/submenu/submenuJudgement.asm"
+INCLUDE "../actors/submenu/submenuLeadin.asm"
+INCLUDE "../actors/submenu/submenuRebind.asm"
+INCLUDE "../actors/submenu/submenuSkin.asm"
+INCLUDE "../actors/submenu/submenuSort.asm"
+INCLUDE "../actors/submenu/submenuSpeed.asm"
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;rst routines
@@ -176,9 +185,14 @@ memcmp: ;rst $18
 	dec c
 	jr nz, memcmp-1
 	ret
-rst_20:
-	ret
-	ds 7, $00
+strcpy:
+	ld a, [de]
+	inc de
+	and a
+	ret z
+	ldi [hl], a
+	jr strcpy
+	ds 1, $00
 rst_28:
 	ret
 	ds 7, $00
