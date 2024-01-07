@@ -17,7 +17,7 @@ submenuLeadin:
 	
 	swapInRam save_file
 	
-	ld hl, leadin_tile
+	ld hl, leadin_time
 	ldi a, [hl]
 	ld h, [hl]
 	ld l, a
@@ -56,10 +56,10 @@ submenuLeadin:
 	ldi [hl], a
 	ld [hl], "s"
 	
-	call submenuLeadIn.renderDigits
+	call submenuLeadin.renderDigits
 	restoreBank "ram"
 	restoreBank "ram"	
-	updateActorMain submenuLeadIn.main
+	updateActorMain submenuLeadin.main
 	ret
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -130,9 +130,9 @@ submenuLeadin:
 	ld a, [hl]
 	sub $01
 	ld [hl], a
-	jr c, submenuLeadin.wrapUp
+	jr c, submenuLeadin.wrapDown
 		ld [hl], $09
-	.wrapUp:
+	.wrapDown:
 	jp submenuLeadin.renderDigits
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -177,7 +177,7 @@ submenuLeadin:
 	
 	call submenuLeadin.atoi14
 	swapInRam save_file
-	ld hl, leanin_tile
+	ld hl, leadin_time
 	ld a, e
 	ldi [hl], a
 	ld [hl], d
@@ -210,15 +210,15 @@ submenuLeadin:
 	ldi a, [hl]
 	add "0"
 	ld [de], a
-	inc [de]
+	inc de
 	ldi a, [hl]
 	add "0"
 	ld [de], a
-	inc [de]
+	inc de
 	ldi a, [hl]
 	add "0"
 	ld [de], a
-	inc [de]
+	inc de
 	ldi a, [hl]
 	add "0"
 	ld [de], a
@@ -261,7 +261,7 @@ submenuLeadin:
 	dec a
 	ret z
 	
-	updateActorMain submenuLeadIn.submit
+	updateActorMain submenuLeadin.submit
 	ret
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -306,28 +306,94 @@ submenuLeadin:
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 .atoi14:
-	ld hl, $000E
-	xor a
-	.dec2binLoop:
-		sra d
+	ld hl, $0004
+	.nibble1:
+		srl d
 		rr e
-		jr nc, submenuLeadin.shifted0
-			rra
-			rr h
-			add $50
-			jr submenuLeadin.reconvene
-		.shifted0:
-		rra
 		rr h
-		.reconvene:
+		
+		ld a, e
+		and $0F
+		cp $08
+		jr c, submenuLeadin.good14
+			sub $03
+		.good14:
+		xor e
+		and $0F
+		xor e
+		ld e, a
+		and $F0
+		cp $80
+		jr c, submenuLeadin.good18
+			sub $30
+		.good18:
+		xor e
+		and $F0
+		xor e
+		ld e, a
+		
+		ld a, d
+		and $0F
+		cp $08
+		jr c, submenuLeadin.good1C
+			sub $03
+		.good1C:
+		xor d
+		and $0F
+		xor d
+		
 		dec l
-	jr nz, submenuLeadin.dec2binLoop
-	rra
-	rr h
-	rra
-	ld d, a
-	rr h
-	ld e, h
+	jr nz, submenuLeadin.nibble1
+	
+	ld l, $04
+	.nibble2:
+		srl d
+		rr e
+		rr h
+		
+		ld a, e
+		and $0F
+		cp $08
+		jr c, submenuLeadin.good24
+			sub $03
+		.good24:
+		xor e
+		and $0F
+		xor e
+		ld e, a
+		and $F0
+		cp $80
+		jr c, submenuLeadin.good28
+			sub $30
+		.good28:
+		xor e
+		and $F0
+		xor e
+		ld e, a
+		
+		dec l
+	jr nz, submenuLeadin.nibble2
+	
+	ld d, $04
+	.nibble3:
+		srl e
+		rr l
+		
+		ld a, e
+		and $0F
+		cp $08
+		jr c, submenuLeadin.good34
+			sub $03
+		.good34:
+		xor e
+		and $0F
+		xor e
+		ld e, a
+		
+		dec d
+	jr nz, submenuLeadin.nibble3
+	ld e, l
+	ld d, h	
 	ret
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;	
@@ -341,7 +407,7 @@ submenuLeadin:
 	dec a
 	ret nz
 	
-	updateActorMain submenu.Leadin.main
+	updateActorMain submenuLeadin.main
 	ret
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
