@@ -168,14 +168,10 @@ submenuLeadin:
 	ldi a, [hl]
 	ld e, a
 	ldi a, [hl]
-	swap a
-	or e
-	ld e, a ;e = 10s and 1s
+	ld d, a
 	ldi a, [hl]
-	ld d, [hl]
-	swap d
-	or d
-	ld d, a ;de = digits in bcd
+	ld h, [hl]
+	ld l, a ;the digits are now in hlde order
 	
 	call submenuLeadin.atoi14 ;convert to binary in de
 	swapInRam save_file
@@ -311,101 +307,50 @@ submenuLeadin:
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-.atoi14:
-	;the plan is to do double dabble in reverse. but now we have no daa to do the actual math, so it will be annoying
-	ld hl, $0004 ;h will act as a canvas to hold the bits as they shift out, l is a loop counter to do one nibble
-	.nibble1:
-		srl d
-		rr e
-		rr h ;shift 1 bit into h
-		
-		ld a, e
-		and $0F
-		cp $08 ;check if each nibble is 8 or greater
-		jr c, submenuLeadin.good14
-			sub $03 ;if so, subtract 3. this makes it 5, so we correctly carried 10/2 = 5
-		.good14:
-		xor e
-		and $0F
-		xor e ;merge the lower 4 bits of a (which contain the corrected value) into e
-		ld e, a
-		and $F0 ;check the upper nibble for an 8 or greater
-		cp $80
-		jr c, submenuLeadin.good18
-			sub $30 ;if so, subtract 3 from that nibble
-		.good18:
-		xor e
-		and $F0
-		xor e ;merge it in
-		ld e, a
-		
-		ld a, d ;repeat for the 3rd nibble.
-		and $0F
-		cp $08
-		jr c, submenuLeadin.good1C
-			sub $03
-		.good1C:
-		xor d
-		and $0F
-		xor d
-		ld d, a ;the 4th nibble only has 2 bits. so the range it can take is 0-3, which we can use as-is. so we can stop processing here
-		
-		dec l
-	jr nz, submenuLeadin.nibble1
+.atoi14: ;hlde contains a string of 4 digits in base ten.
+	ld a, d ;first, consolidate the tens and ones.
+	add a
+	add a
+	add d
+	add a
+	add e
+	ld e, a ;e = d*10 + e
 	
-	ld l, $04 ;calculate another 4 bits
-	.nibble2:
-		srl d
-		rr e
-		rr h ;shift 1 bit into h
-		
-		ld a, e ;process as we did before. this time, the lower nibble of d is not getting any 1s shifted into it, so we only do e.
-		and $0F
-		cp $08
-		jr c, submenuLeadin.good24
-			sub $03
-		.good24:
-		xor e
-		and $0F
-		xor e
-		ld e, a
-		and $F0
-		cp $80
-		jr c, submenuLeadin.good28
-			sub $30
-		.good28:
-		xor e
-		and $F0
-		xor e
-		ld e, a
-		
-		dec l
-	jr nz, submenuLeadin.nibble2
+	ld a, h ;consolidate the hundreds and thousands.
+	add a
+	add a
+	add h
+	add a
+	add l
+	ld d, a ;d = h*10 + l
 	
-	ld d, $04 ;now that weve done 8 bits, l is needed to hold the result. luckily, d is empty and can be used as a loop counter
-	.nibble3: ;calculate another 4 bits
-		srl e
-		rr l ;shift one bit into l
-		
-		ld a, e
-		and $0F
-		cp $08
-		jr c, submenuLeadin.good34
-			sub $03
-		.good34:
-		xor e
-		and $0F
-		xor e
-		ld e, a ;only process the lower half of e
-		
-		dec d
-	jr nz, submenuLeadin.nibble3
+	;finally, multiply d*100 + e to get h*1000+l*100+d*10+e, which is the number we want
+	ld l, a
+	ld h, $00
 	
-	ld a, e ;the remaining 2 bits in e form the most significant digit
-	or l ;combine with the second most significant digit, which is being held in the most significant nibble of l
-	swap a ;correct their order so the mosy significant digit is in the most significant nibble
-	ld d, a
-	ld e, h ;return in de
+	add hl, hl ;2
+	ld a, d
+	add l
+	ld l, a
+	ld a, h
+	adc $00
+	ld h, a    ;3
+	add hl, hl ;6
+	add hl, hl ;12
+	add hl, hl ;24
+	ld a, d
+	add l
+	ld l, a
+	ld a, h
+	adc $00
+	ld h, a    ;25
+	add hl, hl ;50
+	add hl, hl ;100
+	
+	ld d, $00
+	add hl, de
+	ld e, l
+	ld d, h
 	ret
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;	
