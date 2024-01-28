@@ -315,16 +315,21 @@ submenuSkin:
 	
 .initOAM:
 	swapInRam on_deck
+	push bc
+	
 	ld a, [active_oam_buffer]
+	ld d, a
 	ld h, a
+	ld e, $00
 	ld l, $98
+	
+	ld c, $08
+	rst $10
+	
+	ld l, c
 	ld de, submenuSkin.sprite_entries
-	.spriteLoop:
-		ld a, [de]
-		inc de
-		ldi [hl], a
-		cp $1A
-	jr nz, submenuSkin.spriteLoop
+	ld c, $08
+	rst $10
 	
 	ldh a, [$FF45]
 	ld hl, SCANLINEBUF
@@ -332,6 +337,8 @@ submenuSkin:
 	ld [hl], a
 	ld a, $70
 	ldh [$FF45], a
+	
+	pop bc
 	restoreBank "ram"
 	ret
 
@@ -339,20 +346,28 @@ submenuSkin:
 
 .restoreOAM:
 	swapInRam on_deck
+	push bc
+	
 	ld a, [active_oam_buffer]
+	ld d, a
 	ld h, a
+	ld e, $98
+	ld l, $00
+	
+	ld c, $08
+	rst $10
+	
 	ld l, $98
 	xor a
-	ld e, $08
-	.spriteLoop2:
-		ldi [hl], a
-		dec e
-	jr nz, submenuSkin.spriteLoop2
+	ld c, $08
+	rst $08
 	
 	ld hl, SCANLINEBUF
 	add hl, bc
 	ld a, [hl]
 	ldh [$FF45], a
+	
+	pop bc
 	restoreBank "ram"
 	ret
 
@@ -365,7 +380,7 @@ submenuSkin:
 
 .sprite_entries:
 	db $84, $14, $7C, $0A
-	db $84, $1C, $7E, $1A
+	db $84, $1C, $7E, $0A
 	
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
