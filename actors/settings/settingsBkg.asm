@@ -5,7 +5,7 @@ SECTION "SETTINGS BKG", ROMX
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ;an "x" below a letter denotes it being unused. they will be used to store ui elements instead, which appear above them.
-;                <    ^ v > 
+;     #          <    ^ v > 
 ;abcdefghijklmnopqrstuvwxyz
 ;     x          x    xxx x
 
