@@ -395,14 +395,14 @@ ENDR
 
 .blank_msg: db "                  \n"
 
-.string_00: db "cool skin   1\n"
-.string_01: db "clean skin  2\n"
-.string_02: db "crisp skin  3\n"
-.string_03: db "these skins 4\n"
-.string_04: db "are great   5\n"
-.string_05: db "arent they  6\n"
-.string_06: db "i love them 7\n"
-.string_07: db "a lot       8\n"
+.string_00: db "standard     \n"
+.string_01: db "wide         \n"
+.string_02: db "tapered      \n"
+.string_03: db "outlined     \n"
+.string_04: db "ddr          \n"
+.string_05: db "simple       \n"
+.string_06: db "hollow       \n"
+.string_07: db "soccer ball  \n"
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
