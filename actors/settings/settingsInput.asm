@@ -19,7 +19,7 @@ settingsInput:
 	ld a, [last_selected_option]
 	ldi [hl], a ;get the most recently selected option and copy it to local memory. this will appear as the topmost option.
 	
-	cp NUMOPTIONS - NUMVISIBLE + 1 ;if the option is near the end of the list, we cant render it as the topmost one.
+	cp NUMOPTIONS - NUMVISIBLE ;if the option is near the end of the list, we cant render it as the topmost one.
 	jr c, settingsInput.topOption ;if the option is near the top, then we can.
 		sub NUMOPTIONS - NUMVISIBLE ;calculate where the cursor will appear since it won't be the top
 		ldi [hl], a 
@@ -174,8 +174,9 @@ settingsInput:
 	ld [last_selected_option], a ;write current option to save file before exiting
 	restoreBank "ram"
 	
-	ld e, c
-	ld d, b
+	push bc
+	call saveGame
+	pop de
 	jp removeActor
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
