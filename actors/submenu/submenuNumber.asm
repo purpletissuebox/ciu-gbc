@@ -1,10 +1,16 @@
-SECTION "SUBMENU LEADIN", ROMX
+SECTION "SUBMENU NUMBER", ROMX
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;handler for the "lead-in time" submenu.
-;displays a menu with 4 digits that be changed
-;reads and writes to the lead-in time in the save file.
+;handler for a submenu that lets the user type in a number.
+;selects parameters (number of digits, destination, max value) based on variable.
+;displays a menu with digits that wrap around, and saves them as bcd numbers in local memory.
+;saves in binary to save file when confirmed.
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+VARIABLE = $0003
+NUMDIGITS = $000B
+DEST = $000C
+UNITS = $000E
 
 CURRENTDIGIT = $0010
 DIGITS = $0011
@@ -12,18 +18,53 @@ DIGITS = $0011
 PUSHC
 SETCHARMAP settingsChars
 
-submenuLeadin:
+submenuNumber:
 .init:
-	ld de, submenuLeadin.task
+	ld de, submenuNumber.task
 	call loadGraphicsTask ;the region of the map for the submenu will stay constant, so pre-load a task for it
+	
+	ld hl, VARIABLE
+	add hl, bc
+	ld a, [hl]
+	
+	add a
+	add a
+	ld de, submenuNumber.targetTable
+	add e
+	ld e, a
+	ld a, d
+	adc $00
+	ld d, a ;de points to parameters for this menu
+	
+	ld hl, NUMDIGITS
+	add hl, bc	
+	REPT 4
+		ld a, [de]
+		inc de
+		ldi [hl], a ;copy parameters into local memory
+	ENDR
 	
 	swapInRam save_file
 	
-	ld hl, leadin_time
+	ld hl, NUMDIGITS
+	add hl, bc
+	ldi a, [hl] ;hl points to ptr to variable in save file
+	ld e, a ;e = number of digits
+	
 	ldi a, [hl]
 	ld h, [hl]
-	ld l, a ;get hl = lead-in time from the save file
-	call submenuLeadin.itoa14 ;de = 4 digits in bcd
+	ld l, a ;hl = ptr to variable of interest
+	ldi a, [hl]
+	ld h, [hl]
+	ld l, a ;hl = the variable itself. h is potentially garbage if the variable was only 1 byte.
+	
+	inc e
+	bit 2, e
+	jr nz, submenuNumber.bigNumber
+		ld h, $00
+	.bigNumber:
+	
+	call submenuNumber.itoa14 ;de = 4 digits in bcd
 	
 	ld hl, CURRENTDIGIT
 	add hl, bc
@@ -47,21 +88,36 @@ submenuLeadin:
 	
 	swapInRam shadow_wmap
 	ld hl, shadow_wmap + 32*14 + 1
-	ld de, submenuLeadin.confirm_msg
+	ld de, submenuNumber.confirm_msg
 	rst $20
 	ld hl, shadow_wmap + 32*16 + 1
-	ld de, submenuLeadin.cancel_msg
+	ld de, submenuNumber.cancel_msg
 	rst $20 ;write static messages to the left side of the menu
 	
-	ld hl, shadow_wmap + 32*15 + 17
-	ld a, "m"
-	ldi [hl], a
-	ld [hl], "s" ;write static milliseconds tag to the right side
+	ld hl, UNITS
+	add hl, bc
+	ld a, [hl] ;get unit ID
 	
-	call submenuLeadin.renderDigits ;write digits and arrows to window
+	add a
+	add a
+	ld de, submenuNumber.units
+	add e
+	ld e, a
+	ld a, d
+	adc $00
+	ld d, a ;index unit array, de points to string
+	
+	ld hl, shadow_wmap + 32*15 + 16
+	REPT 3
+		ld a, [de]
+		inc de
+		ldi [hl], a
+	ENDR ;write units to the right side
+	
+	call submenuNumber.renderDigits ;write digits and arrows to window
 	restoreBank "ram"
 	restoreBank "ram"	
-	updateActorMain submenuLeadin.main
+	updateActorMain submenuNumber.main
 	ret
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -69,32 +125,32 @@ submenuLeadin:
 .main:
 	ldh a, [press_input]
 	bit 7, a
-	jr z, submenuLeadin.checkUp
-		jp submenuLeadin.down
+	jr z, submenuNumber.checkUp
+		jp submenuNumber.down
 	.checkUp:
 	bit 6, a
-	jr z, submenuLeadin.checkLeft
-		jp submenuLeadin.up
+	jr z, submenuNumber.checkLeft
+		jp submenuNumber.up
 	.checkLeft:
 	bit 5, a
-	jr z, submenuLeadin.checkRight
-		jp submenuLeadin.left
+	jr z, submenuNumber.checkRight
+		jp submenuNumber.left
 	.checkRight:
 	bit 4, a
-	jr z, submenuLeadin.checkStart
-		jp submenuLeadin.right
+	jr z, submenuNumber.checkStart
+		jp submenuNumber.right
 	.checkStart:
 	bit 3, a
-	jr z, submenuLeadin.checkB
-		jp submenuLeadin.start
+	jr z, submenuNumber.checkB
+		jp submenuNumber.start
 	.checkB:
 	bit 1, a
-	jr z, submenuLeadin.checkA
-		jp submenuLeadin.B
+	jr z, submenuNumber.checkA
+		jp submenuNumber.B
 	.checkA:
 	bit 0, a
 	ret z
-		jp submenuLeadin.A
+		jp submenuNumber.A
 	
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -112,10 +168,10 @@ submenuLeadin:
 	inc a ;increment it
 	cp $0A
 	ld [hl], a ;if it didnt overflow, write it as-is
-	jr nz, submenuLeadin.wrapUp
+	jr nz, submenuNumber.wrapUp
 		ld [hl], $00 ;otherwise wrap to 0
 	.wrapUp:
-	jp submenuLeadin.renderDigits ;render the new numbers
+	jp submenuNumber.renderDigits ;render the new numbers
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -132,96 +188,153 @@ submenuLeadin:
 	ld a, [hl]
 	sub $01 ;decrement it
 	ld [hl], a ;if it didnt underflow, write it as-is
-	jr nc, submenuLeadin.wrapDown
+	jr nc, submenuNumber.wrapDown
 		ld [hl], $09 ;otherwise, wrap to 9
 	.wrapDown:
-	jp submenuLeadin.renderDigits ;render the new numbers
+	jp submenuNumber.renderDigits ;render the new numbers
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 .left:
 	ld hl, CURRENTDIGIT
 	add hl, bc
-	ld a, [hl]
+	ld e, l
+	ld d, h
+	ld a, [de]
 	inc a
-	and $03
-	ld [hl], a ;arrow now appears over the digit to the left mod 4
-	jp submenuLeadin.renderDigits ;render it
+	
+	ld hl, NUMDIGITS
+	add hl, bc
+	cp [hl]
+	jr c, submenuNumber.wrapLeft
+		xor a
+	.wrapLeft:
+	
+	ld [de], a ;arrow now appears over the digit to the left mod NUMDIGITS
+	jp submenuNumber.renderDigits ;render it
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 .right:
 	ld hl, CURRENTDIGIT
 	add hl, bc
+	ld e, l
+	ld d, h
+	ld a, [de]
+	sub $01
+	jr nc, submenuNumber.wrapRight 
+	
+	ld hl, NUMDIGITS
+	add hl, bc
 	ld a, [hl]
 	dec a
-	and $03
-	ld [hl], a ;arrow now appears over the digit to the right mod 4
-	jp submenuLeadin.renderDigits
+	
+	.wrapRight:
+	ld [de], a ;arrow now appears over the digit to the right mod NUMDIGITS
+	jp submenuNumber.renderDigits ;render it
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 .A:
 .start:
+	ld hl, NUMDIGITS
+	add hl, bc
+	ld a, [hl]
+	
 	ld hl, DIGITS
 	add hl, bc ;hl points to array of 4 digits from least to most significant
+	push bc
+	ld b, a
+	ld c, a
+	
 	ldi a, [hl]
 	ld e, a
+	dec b
+	jr z, submenuNumber.confirm8
+	
 	ldi a, [hl]
 	ld d, a
+	dec b
+	jr z, submenuNumber.confirm16
+	
 	ldi a, [hl]
 	ld h, [hl]
-	ld l, a ;the digits are now in hlde order
+	ld l, a
+	dec b
+	jr z, submenuNumber.confirm24
+	jr submenuNumber.confirm32
 	
-	call submenuLeadin.atoi14 ;convert to binary in de
+	.confirm8:
+	ld d, $00
+	.confirm16:
+	ld l, $00
+	.confirm24:
+	ld h, $00
+	.confirm32:
+	
+	call submenuNumber.atoi14 ;convert to binary in de
+	ld l, c
+	pop bc
 	swapInRam save_file
-	ld hl, leadin_time
-	ld a, e
-	ldi [hl], a
-	ld [hl], d ;save to the save file
+	
+	ld a, l
+	ld hl, DEST
+	add hl, bc
+	
+	cp $03
+	ldi a, [hl]
+	ld h, [hl]
+	ld l, a
+	jr c, submenuNumber.smallNumber
+	
+	inc hl
+	ld a, d
+	ldd [hl], a
+	.smallNumber:
+	ld [hl], e ;save 8 or 16 bit number to the save file at DEST
 	restoreBank "ram"
-	;now we have successfully saved the lead in time. we exit by falling through to the B case, since that will also exit.
+	;now we have successfully saved the variable. we exit by falling through to the B case, since that exits without saving and we just saved
 
 .B:
 	swapInRam shadow_wmap
 	ld hl, shadow_wmap + 32*14 + 1
-	ld de, submenuLeadin.blank_msg
+	ld de, submenuNumber.blank_msg
 	rst $20
 	ld hl, shadow_wmap + 32*15 + 1
-	ld de, submenuLeadin.blank_msg
+	ld de, submenuNumber.blank_msg
 	rst $20
 	ld hl, shadow_wmap + 32*16 + 1
-	ld de, submenuLeadin.blank_msg
+	ld de, submenuNumber.blank_msg
 	rst $20 ;blank out the window layer where the submenu appears
 	restoreBank "ram"
 	
-	updateActorMain submenuLeadin.exit ;and exit
-	jp submenuLeadin.exit
+	updateActorMain submenuNumber.exit ;and exit
+	jp submenuNumber.exit
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 .renderDigits:
 	swapInRam shadow_wmap
-	;first, display the digits
-	ld hl, DIGITS
-	add hl, bc ;hl points to digit array from least to most significant
-	ld de, shadow_wmap + 32*15 + 15 ;de points to the rightmost digit
 	
-	ldi a, [hl]
-	add "0"
-	ld [de], a
-	dec de
-	ldi a, [hl]
-	add "0"
-	ld [de], a
-	dec de
-	ldi a, [hl]
-	add "0"
-	ld [de], a
-	dec de
-	ldi a, [hl]
-	add "0"
-	ld [de], a ;save digits from right to left (least to most significant)
+	ld hl, NUMDIGITS
+	add hl, bc
+	ld a, [hl]
+	
+	ld hl, DIGITS
+	add hl, bc ;hl points to least dignificant digit of the array
+	push bc
+	ld b, a
+	
+	ld de, shadow_wmap + 32*15 + 15 ;de points to the rightmost digit
+
+	.copyDigits:
+		ldi a, [hl]
+		add "0"
+		ld [de], a
+		dec de
+		dec b
+	jr nz, submenuNumber.copyDigits
+	pop bc
 	
 	;next, blank out where the old arrow was	
 	ld hl, CURRENTDIGIT
@@ -262,7 +375,7 @@ submenuLeadin:
 	dec a ;check if number of tasks was 1
 	ret z ;if it was, then go back to the caller immediately
 	
-	updateActorMain submenuLeadin.submit ;this way, lag frames are only inserted if necessary.
+	updateActorMain submenuNumber.submit ;this way, lag frames are only inserted if necessary.
 	ret
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -285,7 +398,7 @@ submenuLeadin:
 		adc a
 		daa ;so daa with one register
 		dec d
-	jr nz, submenuLeadin.phase2
+	jr nz, submenuNumber.phase2
 	
 	rl d ;put carry in d
 	ld e, a ;put least significant digits in e
@@ -302,7 +415,7 @@ submenuLeadin:
 		daa
 		ld d, a
 		dec l
-	jr nz, submenuLeadin.phase3
+	jr nz, submenuNumber.phase3
 	ret
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -364,7 +477,7 @@ submenuLeadin:
 	dec a ;check if the task went through
 	ret nz ;try again if it didnt
 	
-	updateActorMain submenuLeadin.main
+	updateActorMain submenuNumber.main
 	ret
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -386,11 +499,23 @@ submenuLeadin:
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+.targetTable:
+	db $04
+	dw leadin_time
+	db $00
+	db $03
+	dw note_speed
+	db $01
+	
+.units:
+	db " ms", $FF
+	db "pct", $FF
+
 .task:
 	GFXTASK shadow_wmap, $01C0, win_map, $01C0, $06
 	
 .confirm_msg:
-	db "azconfirm\n"
+	db "azsubmit\n"
 .cancel_msg:
 	db "bzcancel\n"
 .blank_msg:
