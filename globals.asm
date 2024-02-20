@@ -36,7 +36,7 @@ last_selected_option:
 character:
 	ds $01
 note_speed:
-	ds $01
+	ds $02
 color_scheme:
 	ds $01
 key_bindings:
@@ -49,8 +49,10 @@ input_delay:
 	ds $01
 leadin_time:
 	ds $02
+checksum:
+	ds $04
 .padding:
-	ds $E2
+	ds $DD
 ENDU
 
 current_score:
