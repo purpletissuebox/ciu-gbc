@@ -29,7 +29,7 @@ submenuNumber:
 	
 	add a
 	add a
-	ld de, submenuNumber.targetTable
+	ld de, submenuNumber.target_table
 	add e
 	ld e, a
 	ld a, d
@@ -499,17 +499,18 @@ submenuNumber:
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-.targetTable:
-	db $04
-	dw leadin_time
-	db $00
+.target_table:
+	db $04 ;number of digits
+	dw leadin_time ;ptr to variable
+	db $00 ;unit ID
+	
 	db $03
 	dw note_speed
 	db $01
 	
 .units:
-	db " ms", $FF
-	db "pct", $FF
+	db " ms", $FF ;0
+	db "pct", $FF ;1
 
 .task:
 	GFXTASK shadow_wmap, $01C0, win_map, $01C0, $06
