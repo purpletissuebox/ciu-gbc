@@ -150,26 +150,25 @@ INCLUDE "../actors/submenu/submenuBackground.asm"
 INCLUDE "../actors/submenu/submenuColors.asm"
 INCLUDE "../actors/submenu/submenuDelay.asm"
 INCLUDE "../actors/submenu/submenuJudgement.asm"
-INCLUDE "../actors/submenu/submenuLeadin.asm"
+INCLUDE "../actors/submenu/submenuNumber.asm"
 INCLUDE "../actors/submenu/submenuRebind.asm"
 INCLUDE "../actors/submenu/submenuSkin.asm"
-INCLUDE "../actors/submenu/submenuSort.asm"
-INCLUDE "../actors/submenu/submenuSpeed.asm"
+INCLUDE "../actors/submenu/submenuList.asm"
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;rst routines
 
 SECTION "RSTHANDL", ROM0[$0000]
-call_hl: ;rst 00
+callHL: ;rst $00
 	jp hl
 	ds 7, $00
-memset: ;rst 08
+memset: ;rst $08
 	ldi [hl], a
 	dec c
 	jr nz, memset
 	ret
 	ds 3, $00
-memcpy: ;rst 10
+memcpy: ;rst $10
 	ld a, [de]
 	ldi [hl], a
 	inc de
@@ -185,7 +184,7 @@ memcmp: ;rst $18
 	dec c
 	jr nz, memcmp-1
 	ret
-strcpy:
+strcpy: ;rst $20
 	ld a, [de]
 	inc de
 	and a
