@@ -500,17 +500,26 @@ submenuNumber:
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 .target_table:
-	db $04 ;number of digits
-	dw leadin_time ;ptr to variable
-	db $00 ;unit ID
+	db $03 ;number of digits
+	dw note_speed ;ptr to variable
+	db $01 ;unit ID
+
+	db $04
+	dw leadin_time
+	db $00
 	
-	db $03
-	dw note_speed
+	db $01
+	dw input_delay
+	db $02
+	
+	db $02
+	dw judgement
 	db $01
 	
 .units:
 	db " ms", $FF ;0
 	db "pct", $FF ;1
+	db " f ", $FF ;2
 
 .task:
 	GFXTASK shadow_wmap, $01C0, win_map, $01C0, $06
