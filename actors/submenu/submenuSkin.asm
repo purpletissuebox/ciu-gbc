@@ -38,7 +38,7 @@ submenuSkin:
 	restoreBank "ram"
 	
 	swapInRam shadow_wmap
-	ld a, "f"
+	ld a, "w"
 	ld hl, shadow_wmap + 32*14 + 1
 	ld de, $001D
 	REPT 3
