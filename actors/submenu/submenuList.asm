@@ -320,13 +320,13 @@ ENDR
 .string_01: db "   alphabetical   \n"
 .string_02: db "    score asc     \n"
 .string_03: db "    score desc    \n"
-.string_04: db "   skill level    \n"
+.string_04: db "    difficulty    \n"
 .string_05: db "      tempo       \n"
 
 .string_06: db "      stage       \n"
 .string_07: db "      tunnel      \n"
 .string_08: db "     disabled     \n"
-.string_09: db "      wires       \n"
+.string_09: db "     condiut      \n"
 .string_0A: db "    geometric     \n"
 
 .string_0B: db "      blues       \n"
