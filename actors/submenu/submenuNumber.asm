@@ -503,14 +503,14 @@ submenuNumber:
 	db $03 ;number of digits
 	dw note_speed ;ptr to variable
 	db $01 ;unit ID
-
-	db $04
-	dw leadin_time
-	db $00
 	
 	db $01
 	dw input_delay
 	db $02
+	
+	db $04
+	dw leadin_time
+	db $00
 	
 	db $02
 	dw judgement
@@ -525,7 +525,7 @@ submenuNumber:
 	GFXTASK shadow_wmap, $01C0, win_map, $01C0, $06
 	
 .confirm_msg:
-	db "azsubmit\n"
+	db "azconfirm\n"
 .cancel_msg:
 	db "bzcancel\n"
 .blank_msg:
