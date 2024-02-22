@@ -39,6 +39,8 @@ note_speed:
 	ds $02
 color_scheme:
 	ds $01
+background_selection:
+	ds $01
 key_bindings:
 	ds $03
 note_skin:
@@ -49,10 +51,12 @@ input_delay:
 	ds $01
 leadin_time:
 	ds $02
+judgement:
+	ds $01
 checksum:
 	ds $04
 .padding:
-	ds $DD
+	ds $DB
 ENDU
 
 current_score:
