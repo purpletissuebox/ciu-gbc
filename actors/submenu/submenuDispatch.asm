@@ -28,12 +28,12 @@ submenuDispatch:
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 .actor_table:
-	NEWACTOR submenuNumber, $01
-	NEWACTOR submenuSkin, $FF
-	NEWACTOR submenuRebind, $FF
-	NEWACTOR submenuSort, $FF
-	NEWACTOR submenuDelay, $FF
-	NEWACTOR submenuNumber, $00
-	NEWACTOR submenuBackground, $FF
-	NEWACTOR submenuColors, $FF
-	NEWACTOR submenuJudgement, $FF
+	NEWACTOR submenuNumber, $00 ;scroll speed
+	NEWACTOR submenuSkin, $FF ;note skin
+	NEWACTOR submenuRebind, $FF ;key bindings
+	NEWACTOR submenuList, $00 ;sort method
+	NEWACTOR submenuNumber, $01 ;input delay
+	NEWACTOR submenuNumber, $02 ;lead-in time
+	NEWACTOR submenuList, $01 ;background
+	NEWACTOR submenuList, $02 ;color scheme
+	NEWACTOR submenuNumber, $03 ;judgement
