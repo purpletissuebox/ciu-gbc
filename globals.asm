@@ -56,7 +56,7 @@ judgement:
 checksum:
 	ds $04
 .padding:
-	ds $DB
+	ds $0400 - (@ - save_file)
 ENDU
 
 current_score:
